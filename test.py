@@ -4,7 +4,7 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 
 
-camera = PiCamera()
+camera = PiCamera()  
 
 while(True):
 
