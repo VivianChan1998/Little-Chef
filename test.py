@@ -1,10 +1,11 @@
 import cv2
+import matplotlib.pyplot as plt
 #import cv2.aruco as aruco
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 
 
-camera = PiCamera()  
+camera = PiCamera()
 
 while(True):
 
