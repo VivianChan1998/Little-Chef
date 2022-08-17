@@ -4,13 +4,14 @@ class Stations(Enum):
     NONE = 0
     STOVE = 1
     CHOP = 2
-    CONTER = 3
+    FINISH = 3
     OBSTACLE = 4
     LETTUCE = 5
     TOMATO = 6
     BUN = 7
     MEAT = 8
-    CHEESESPAGHETTI = 9
+    CHEESE = 9
+    SPAGHETTI = 10
 
 class Actions(Enum):
     NONE = 0
