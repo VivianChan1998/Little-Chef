@@ -1,4 +1,3 @@
-from lib2to3.pytree import convert
 import cv2
 import matplotlib.pyplot as plt
 import emoji
@@ -6,19 +5,25 @@ from numpy import tile
 #import cv2.aruco as aruco
 from picamera.array import PiRGBArray
 from picamera import PiCamera
+#from defisheye import Defisheye
+
+dtype = 'linear'
+format = 'fullframe'
+fov = 180
+pfov = 120
 
 def convert2XY(point):
     return (int(point[0]), int(point[1]))
 
 camera = PiCamera()
 tiles = []
-key = input("press SPACE to read >> ")
+key = input("press enter to read >> ")
 
 def determine_dir(topleft, topright, bottomleft, bottomright):
     return 'U'
 
 while(True):
-    if key == ' ':
+    if key == '':
 
         rawCapture = PiRGBArray(camera)
 
@@ -31,6 +36,7 @@ while(True):
         
         if len(corners) > 0:
             ids = ids.flatten()
+            count = 0
             for (markerCorner, markerID) in zip(corners, ids):
                 corners = markerCorner.reshape((4,2))
                 (topLeft, topRight, bottomRight, bottomLeft) = corners
@@ -57,15 +63,18 @@ while(True):
                 elif markerID == 8:
                     tiles.append('C')
                 cv2.putText(frame, str(markerID), (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
-                cv2.putText(frame, str(markerID), (bottomRight[0], bottomRight[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
-
+                cv2.putText(frame, str(count), (bottomRight[0], bottomRight[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
+                count += 1
         frameS = cv2.resize(frame, (960,544))
-        cv2.imshow('frame', frameS)
+        #obj = defisheye(frameS, dtype=dtype, format=format, fov=fov, pfov=pfov)
+        #obj.convert(img_out)
+        plt.imshow(frameS)
+        plt.show()
+        print(tiles)
 
-        key = ''
-        #if cv2.waitKey(1) & 0xFF == ord('q'):
-        #    break
-    else:
-        key = input("press SPACE to read >> ")
+        tiles = []
+
+        #cv2.waitKey(0)
+    
   
 cv2.destroyAllWindows()
