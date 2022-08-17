@@ -98,16 +98,20 @@ def move(dir):
     return STATUS.OK
 
 def cook():
+    #TODO determine error and return status
     return STATUS.OK
 
 def chop():
+    #TODO determine error and return status
     return STATUS.OK
 
 def take():
+    #TODO determine error and return status
     #user.hold = ....
     return STATUS.OK
 
 def put():
+    #TODO determine error and return status
     return STATUS.OK
 
 if __name__ == "__main__":
