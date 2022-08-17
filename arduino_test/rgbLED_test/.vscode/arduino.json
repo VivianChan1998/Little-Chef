@@ -1,0 +1,5 @@
+{
+    "board": "arduino:avr:uno",
+    "sketch": "rgbLED_test.ino",
+    "port": "/dev/tty.usbserial-14310"
+}
