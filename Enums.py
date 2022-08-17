@@ -1,6 +1,6 @@
 from enum import Enum
 
-class Stations(Enum):
+class STATIONS(Enum):
     NONE = 0
     STOVE = 1
     CHOP = 2
@@ -13,7 +13,7 @@ class Stations(Enum):
     CHEESE = 9
     SPAGHETTI = 10
 
-class Actions(Enum):
+class ACTIONS(Enum):
     NONE = 0
     UP = 1
     DOWN = 2
@@ -23,3 +23,10 @@ class Actions(Enum):
     CHOP = 6
     PUT = 7
     TAKE = 8
+
+class STATUS(Enum):
+    ERR_BUMP = 0
+    ERR_INTERACTION = 1
+    ERR_ACTION = 2
+    ERR_INCOMPLETE = 3
+    OK = 4
