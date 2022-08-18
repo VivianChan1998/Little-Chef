@@ -11,6 +11,13 @@ dir_th = 10
 def convert2XY(point):
     return (int(point[0]), int(point[1]))
 
+def getCenter(corners):
+    (topLeft, topRight, bottomRight, bottomLeft) = corners
+    centerX = (topLeft[0] + bottomRight[0]) / 2
+    centerY = (topLeft[1] + bottomRight[1]) / 2
+    return (centerX, centerY)
+
+
 camera = PiCamera()
 tiles = []
 key = input("press enter to read >> ")
@@ -27,6 +34,14 @@ def determine_dir(topleft, topright, bottomleft, bottomright):
     else:
         return 'L'
 
+def sortX(e):
+    print(e[0][0])
+    c = getCenter(e[0][0])
+    return c[0]
+
+def sortY(e):
+    c = getCenter(e[0][0])
+    return c[1]
 
 while(True):
     if key == '':
@@ -39,18 +54,28 @@ while(True):
         arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
         arucoParams = cv2.aruco.DetectorParameters_create()
         (corners, ids, rejected) = cv2.aruco.detectMarkers(frame, arucoDict, parameters=arucoParams)
+
         
         if len(corners) > 0:
             ids = ids.flatten()
+            
+            markers = zip(corners, ids)
+            markers = list(markers)
+            print(markers)
+            markers.sort(key = sortX)
+            markers.sort(key = sortY)
+
             count = 0
-            for (markerCorner, markerID) in zip(corners, ids):
-                corners = markerCorner.reshape((4,2))
+            
+            for m in markers:
+                corners = m[0].reshape((4,2))
                 (topLeft, topRight, bottomRight, bottomLeft) = corners
                 topLeft = convert2XY(topLeft)
                 topRight = convert2XY(topRight)
                 bottomLeft = convert2XY(bottomLeft)
                 bottomRight = convert2XY(bottomRight)
                 dir = 'X'
+                markerID = m[1]
                 if markerID == 0:
                     dir = determine_dir(topLeft, topRight, bottomRight, bottomLeft)
                     tiles.append(dir)
@@ -84,7 +109,4 @@ while(True):
 
         tiles = []
 
-        #cv2.waitKey(0)
     
-  
-cv2.destroyAllWindows()
