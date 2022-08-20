@@ -1,4 +1,9 @@
-// defines pins numbers
+#include <FastLED.h>
+#define LED_PIN     6
+#define NUM_LEDS    50
+CRGB leds[NUM_LEDS];
+
+
 #define X_DELAY 5
 #define Y_DELAY 5
 
@@ -12,8 +17,8 @@
 #define X_FORWARD_DIR 1 // 1 or 0
 #define Y_FROWARD_DIR 1 // 1 or 0
 
-int x_count = 0
-int y_count = 0
+int x_count = 0;
+int y_count = 0;
 
 void setup() {
   // Sets the two pins as Outputs
@@ -29,6 +34,24 @@ void setup() {
     digitalWrite(Y_STEP, LOW);
     digitalWrite(Y_DIR, HIGH);
 
+    FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
+
+    /*TEMP*/
+    Serial.println("X1");
+    move_blocks('X', 1);
+    delay(2000);
+    Serial.println("X2");
+    move_blocks('X', 2);
+    delay(2000);
+    Serial.println("Y1");
+    move_blocks('Y', 1);
+    delay(2000);
+    Serial.println("Y-1");
+    move_blocks('Y', -1);
+    delay(2000);
+    Serial.println("=========test done=========");
+    
+
     Serial.println("start");
 }
 void loop() {
@@ -41,13 +64,17 @@ void loop() {
 
     if(data[0] == 'M')
     {
-        int m = int(data.substring(6))
-        move_blocks(data[5], m)
-        Serial.println('DONE')
+        int m = (data.substring(6)).toInt();
+        move_blocks(data[5], m);
+        Serial.println('DONE');
     }
     else if(data[0] == 'L')
     {
-        
+        /*
+        leds[0] = CRGB(0, 255, 100);
+        leds[1] = CRGB(0, 255, 100);
+        */
+        FastLED.show();
     }
   }
 
@@ -55,7 +82,7 @@ void loop() {
 
 void move_blocks(char dimension, int move) // could be negative val, [-5 ~ +5], no 0
 {
-    Serial.print('move ' + dimension, + ' ' + move) //TEMP
+    Serial.print('move ' + dimension, + ' ' + move); //TEMP
 
     int steps = move *  (dimension == 'X'? abs(X_STEP_ONE_BLOCK) : abs(Y_STEP_ONE_BLOCK));
     int pin_dir = dimension == 'X'? X_DIR : Y_DIR;
