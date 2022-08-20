@@ -12,6 +12,7 @@ class STATIONS(Enum):
     MEAT = 8
     CHEESE = 9
     SPAGHETTI = 10
+    INTERACTION = 20
 
 class ACTIONS(Enum):
     NONE = 0
