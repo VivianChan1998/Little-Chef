@@ -60,7 +60,7 @@ void loop() {
   {
     String data = Serial.readStringUntil('\n');
     Serial.print("[RECIEVED]: ");
-    Serial.println(data); //ex: MOVE_X+1 MOVE_Y-1 LEDS_1_1_ffffff
+    Serial.println(data); //ex: MOVE_X+1 MOVE_Y-1 LEDS_11_ffffff
 
     if(data[0] == 'M')
     {
