@@ -77,16 +77,24 @@ def read_tiles(isRead):
     if READ_CV:
         tmp = TileCamera.get_tiles()
         print(tmp)
-        for t in tmp:
-            print(t)
+        for i in len(tmp):
+            t = tmp[i]
+            repeat = 1
+            if t == '2' or t == '3' or t == '4':
+                repeat = int(t)
+                i += 1
             if t == 'U':
-                tiles.append(ACTIONS.UP)
+                for i in range(repeat):
+                    tiles.append(ACTIONS.UP)
             elif t == 'D':
-                tiles.append(ACTIONS.DOWN)
+                for i in range(repeat):
+                    tiles.append(ACTIONS.DOWN)
             elif t == 'R':
-                tiles.append(ACTIONS.RIGHT)
+                for i in range(repeat):
+                    tiles.append(ACTIONS.RIGHT)
             elif t == 'L':
-                tiles.append(ACTIONS.LEFT)
+                for i in range(repeat):
+                    tiles.append(ACTIONS.LEFT)
             elif t == 'P':
                 tiles.append(ACTIONS.PUT)
             elif t == 'T':
