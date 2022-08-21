@@ -1,3 +1,4 @@
+from difflib import IS_CHARACTER_JUNK
 import numpy as np
 import emoji
 from Enums import STATUS, STATIONS, ACTIONS
@@ -5,6 +6,7 @@ from Food import Food
 from User import User
 import serial
 
+IS_CONNECT = False
 READ_CV = False
 CURR_RECIPE = "HAMBURGER"
 
@@ -15,7 +17,7 @@ START_POINT = (6,0)
 board = np.full((7,6), STATIONS.NONE)
 board[0][5] = STATIONS.FINISH # make sure the location of finish counter
 user = User(START_POINT)
-tiles = np.full(100, ACTIONS.NONE) # RPi code should break it down into one single array for this code
+tiles = [] # RPi code should break it down into one single array for this code
 tile_idx = -1
 finished = []
 status = STATUS.OK
@@ -25,6 +27,8 @@ RECIPES = {
     "MACARONI": ["CHEESE", "SPAGHETTI"]
 }
 current_recipe = RECIPES[CURR_RECIPE]
+ser = ''
+cmd = []
 
 interaction_vector = [
     [( 0, 0),( 0, 0),( 0, 0),( 0, 0),( 0, 0),( 1, 0)],
@@ -40,22 +44,22 @@ def read_tiles(isRead):
         #TODO
         print('read CV...')
     else:
-        tiles[0] = ACTIONS.RIGHT
-        tiles[1] = ACTIONS.UP
-        tiles[2] = ACTIONS.UP
-        tiles[3] = ACTIONS.RIGHT
-        tiles[4] = ACTIONS.RIGHT
-        tiles[5] = ACTIONS.UP
-        tiles[6] = ACTIONS.TAKE
-        tiles[7] = ACTIONS.DOWN
-        tiles[8] = ACTIONS.RIGHT
-        tiles[9] = ACTIONS.COOK
-        tiles[10] = ACTIONS.RIGHT
-        tiles[11] = ACTIONS.UP
-        tiles[12] = ACTIONS.UP
-        tiles[13] = ACTIONS.UP
-        tiles[14] = ACTIONS.PUT
-        tiles[15] = ACTIONS.DOWN
+        tiles.append(ACTIONS.RIGHT)
+        tiles.append(ACTIONS.UP)
+        tiles.append(ACTIONS.UP)
+        tiles.append(ACTIONS.RIGHT)
+        tiles.append(ACTIONS.RIGHT)
+        tiles.append(ACTIONS.UP)
+        tiles.append(ACTIONS.TAKE)
+        tiles.append(ACTIONS.DOWN)
+        tiles.append(ACTIONS.RIGHT)
+        tiles.append(ACTIONS.COOK)
+        tiles.append(ACTIONS.RIGHT)
+        tiles.append(ACTIONS.UP)
+        tiles.append(ACTIONS.UP)
+        tiles.append(ACTIONS.UP)
+        tiles.append(ACTIONS.PUT)
+        tiles.append(ACTIONS.DOWN)
 
 
 def define_board():
@@ -111,13 +115,11 @@ def print_board():
 
 def print_actions(tile_idx):
     for i in range(len(tiles)):
-        if tiles[i] == ACTIONS.NONE:
-            print()
-            break
         if i == tile_idx:
             print(emoji.emojize(":backhand_index_pointing_down: "), end = '')
         else:
             print("  ", end = '')
+    print()
     for i in range(len(tiles)):
         if tiles[i] == ACTIONS.NONE:
             break
@@ -139,12 +141,6 @@ def print_actions(tile_idx):
         elif tile == ACTIONS.TAKE:
             print(emoji.emojize(":palm_up_hand:"), end = '')
         print(' ', end='')
-
-
-def wait_next():
-    key = input("press enter to continue...") #TEMP
-    # RPi-todo: return true when motor stuff done
-    return key
 
 def get_interacting_station(x, y):
     print("here")
@@ -209,13 +205,28 @@ def reach_end():
     #TODO
     #unfinish
     #wrong thing or more thing?
+    print("end")
     return STATUS.OK
+
+
+def execute():
+    if(IS_CONNECT):
+        send_wait_cmd(ser)
+    else:
+        input("------- press enter to continue... -------")
+
+def send_wait_cmd(ser):
+    print("------ handeling cmd ------")
+    if ser.in_waiting > 0:
+        line = ser.readline().decode('utf-8').rstrip()
+        print(line)
 
 
 if __name__ == "__main__":
 
-    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-    ser.reset_input_buffer()
+    if(IS_CONNECT):
+        ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+        ser.reset_input_buffer()
 
     print("\n\n========= MAKING: " + CURR_RECIPE + " =========")
 
@@ -225,29 +236,30 @@ if __name__ == "__main__":
     print_actions(-1)
     print_board()
 
-    for idx,t in enumerate(tiles):
-        ser.write(b"hello")
-        if ser.in_waiting > 0:
-            line = ser.readline().decode('utf-8').rstrip()
-            print(line)
-        if wait_next() == '':
-            if t == ACTIONS.UP or t == ACTIONS.DOWN or t == ACTIONS.LEFT or t == ACTIONS.RIGHT:
-                status = move(t)
-            elif t == ACTIONS.COOK:
-                status = cook()
-            elif t == ACTIONS.CHOP:
-                status = chop()
-            elif t == ACTIONS.TAKE:
-                status = take()
-            elif t == ACTIONS.PUT:
-                status = put()
+    for idx, t in enumerate(tiles):
+        
+        if t == ACTIONS.UP or t == ACTIONS.DOWN or t == ACTIONS.LEFT or t == ACTIONS.RIGHT:
+            status = move(t)
+        elif t == ACTIONS.COOK:
+            status = cook()
+        elif t == ACTIONS.CHOP:
+            status = chop()
+        elif t == ACTIONS.TAKE:
+            status = take()
+        elif t == ACTIONS.PUT:
+            status = put()
 
-            print_actions(idx)
-            print_board()
+        print_actions(idx)
+        print_board()
 
-            if status != STATUS.OK:
-                print(emoji.emojize(":angry_face_with_horns: "), end='')
-                print(status)
-                print()
-                return_to_start()
+        if status != STATUS.OK:
+            print(emoji.emojize(":angry_face_with_horns: "), end='')
+            print(status)
+            print()
+            return_to_start()
+
+        print("\n WAITING.... \n")
+        execute()
+
     reach_end()
+    execute()
