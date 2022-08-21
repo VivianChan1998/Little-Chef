@@ -5,6 +5,7 @@ from Enums import STATUS, STATIONS, ACTIONS
 from Food import Food
 from User import User
 import serial
+import queue
 
 IS_CONNECT = False
 READ_CV = False
@@ -28,7 +29,39 @@ RECIPES = {
 }
 current_recipe = RECIPES[CURR_RECIPE]
 ser = ''
-cmd = []
+cmds = []
+
+'''
+BFS Function
+'''
+dRow = [-1, 0, 1,  0];
+dCol = [ 0, 1, 0, -1];
+vis = np.zeros((7,6))
+dist = np.full((7,6), 1000)
+
+def BFS(vis, row, col, pred):
+    q = queue.Queue()
+    q.put((row, col))
+    vis[row][col] = True
+    dist[row][col] = 0
+    d = 0
+
+    while not q.empty():
+        cell = q.get()
+        d = dist[cell[0]][cell[1]] + 1
+ 
+        for i in range(4):
+            adjx = cell[0] + dRow[i]
+            adjy = cell[1] + dCol[i]
+ 
+            if adjx >= 1  and adjx <= 6  and adjy >= 0 and adjy < 6 and (board[adjx][adjy] == STATIONS.NONE or board[adjx][adjy] == STATIONS.INTERACTION) and not vis[adjx][adjy]:
+                q.put((adjx, adjy))
+                vis[adjx][adjy] = True
+                if dist[adjx][adjy] > d:
+                    dist[adjx][adjy] = d
+                    pred[adjx][adjy] = cell;
+            if adjx == 6 and adjy == 0:
+                break
 
 interaction_vector = [
     [( 0, 0),( 0, 0),( 0, 0),( 0, 0),( 0, 0),( 1, 0)],
@@ -51,6 +84,7 @@ def read_tiles(isRead):
         tiles.append(ACTIONS.RIGHT)
         tiles.append(ACTIONS.UP)
         tiles.append(ACTIONS.TAKE)
+        '''
         tiles.append(ACTIONS.DOWN)
         tiles.append(ACTIONS.RIGHT)
         tiles.append(ACTIONS.COOK)
@@ -60,6 +94,7 @@ def read_tiles(isRead):
         tiles.append(ACTIONS.UP)
         tiles.append(ACTIONS.PUT)
         tiles.append(ACTIONS.DOWN)
+        '''
 
 
 def define_board():
@@ -68,8 +103,24 @@ def define_board():
     board[2][3] = STATIONS.MEAT
     
 def return_to_start():
-    print('return to start')
-    #TODO
+    print('return to start ============ ')
+    pred = np.empty((7,6), dtype=object)
+    BFS(vis, user.location[0], user.location[1], pred)
+    path = []
+    crawl = (6,0)
+    path.append(crawl)
+    while pred[crawl] != None:
+        path.insert(0, pred[crawl]);
+        crawl = pred[crawl];
+    print(path)
+
+    for i in range(1, len(path)):
+        dirx = path[i][0] - user.location[0]
+        diry = path[i][1] - user.location[1]
+        user.location = (user.location[0] + dirx, user.location[1] + diry)
+        c = "MOVE_" + ('Y' if dirx!=0 else 'X') + ('-1' if diry<0 or dirx<0 else '+1')
+        cmds.append(c)
+        execute()
 
 def add_interaction_area():
     for i in range(7):
@@ -90,7 +141,6 @@ def print_board():
     for i in range(len(finished)):
         print(finished[i].name + ' ')
     print()
-
 
     for j in range(6):
         tmp = str(board[0][j])[9:12]
@@ -143,8 +193,6 @@ def print_actions(tile_idx):
         print(' ', end='')
 
 def get_interacting_station(x, y):
-    print("here")
-    print((x - interaction_vector[y][x][1], y - interaction_vector[y][x][0]))
     return board[x - interaction_vector[y][x][1]][y - interaction_vector[y][x][0]]
 
 def move(dir):
@@ -154,6 +202,9 @@ def move(dir):
         print(next_loc_x, next_loc_y)
         return STATUS.ERR_BUMP
     user.location = (next_loc_x, next_loc_y)
+    c = "MOVE_" + ('Y' if dir==ACTIONS.DOWN or dir==ACTIONS.UP else 'X') + ('-1' if dir==ACTIONS.LEFT or dir==ACTIONS.UP else '+1')
+    cmds.append(c)
+    print(c)
     return STATUS.OK
 
 def cook():
@@ -162,9 +213,9 @@ def cook():
     if board[x][y] != STATIONS.INTERACTION:
         return STATUS.ERR_INTERACTION
     s = get_interacting_station(x,y)
-    print(s)
     if s != STATIONS.COOK and user.hold.instructions != "cook":
         return STATUS.ERR_ACTION
+    cmds.append("SOUND_CO")
     return STATUS.OK
 
 def chop():
@@ -175,6 +226,7 @@ def chop():
     s = get_interacting_station(x,y)
     if s != STATIONS.CHOP and user.hold.instructions != "chop":
         return STATUS.ERR_ACTION
+    cmds.append("SOUND_CH")
     return STATUS.OK
 
 def take():
@@ -187,6 +239,7 @@ def take():
         return STATUS.ERR_ACTION
     user.hold = Food(s.value)
     user.isHolding = True
+    cmds.append("SOUND_TA")
     return STATUS.OK
 
 def put():
@@ -199,28 +252,70 @@ def put():
     finished.append(user.hold)
     user.hold = None
     user.isHolding = False
+    cmds.append("SOUND_PU")
     return STATUS.OK
 
 def reach_end():
-    #TODO
-    #unfinish
-    #wrong thing or more thing?
+    for ingredients in current_recipe:
+        if ingredients not in finished:
+            return STATUS.ERR_INCOMPLETE
+    if len(current_recipe) != len(finished):
+        return STATUS.ERR_INCOMPLETE
     print("end")
     return STATUS.OK
 
+def check_err_execute():
+    if status != STATUS.OK:
+        print(emoji.emojize(":angry_face_with_horns: "), end='')
+        print(status)
+        print()
+        cmds.append("SOUND_ERR") #TEMP
+        execute()
+        return_to_start()
+    execute()
 
 def execute():
+    key = ''
+    print(cmds)
     if(IS_CONNECT):
         send_wait_cmd(ser)
     else:
-        input("------- press enter to continue... -------")
+        key = input("------- press enter to continue... -------")
+    cmds.clear()
+    return key
 
 def send_wait_cmd(ser):
-    print("------ handeling cmd ------")
-    if ser.in_waiting > 0:
-        line = ser.readline().decode('utf-8').rstrip()
-        print(line)
-
+    print("--------- handeling cmd ---------")
+    # LED_T -> LED_B -> MOVE
+    for c in cmds:
+        print(c)
+        if c[0] == 'L':
+            print("LED")
+        elif c[0] == 'S':
+            print("SOUND")
+        else:
+            ser.write(c.encode('utf-8'))
+        line = ""
+        while True:
+            if ser.in_waiting > 0:
+                line += ser.readline().decode('utf-8').rstrip()
+                print(line)
+                if line == "DONE":
+                    break
+    print("------------ cmd done ------------")
+        
+def wait_for_button():
+    while True:
+        if(IS_CONNECT):
+            if ser.in_waiting > 0:
+                line += ser.readline().decode('utf-8').rstrip()
+                print(line)
+                if line == "BUTTON":
+                    break
+        else:
+            key = input("type start >>> ")
+            if key == 'start':
+                break
 
 if __name__ == "__main__":
 
@@ -232,34 +327,40 @@ if __name__ == "__main__":
 
     define_board()
     add_interaction_area()
-    read_tiles(READ_CV)
-    print_actions(-1)
-    print_board()
+    
 
-    for idx, t in enumerate(tiles):
-        
-        if t == ACTIONS.UP or t == ACTIONS.DOWN or t == ACTIONS.LEFT or t == ACTIONS.RIGHT:
-            status = move(t)
-        elif t == ACTIONS.COOK:
-            status = cook()
-        elif t == ACTIONS.CHOP:
-            status = chop()
-        elif t == ACTIONS.TAKE:
-            status = take()
-        elif t == ACTIONS.PUT:
-            status = put()
+    while True:
 
-        print_actions(idx)
+        wait_for_button()
+
+        user = User(START_POINT)
+        tiles.clear()
+        tile_idx = -1
+        finished.clear()
+
+        read_tiles(READ_CV)
+        print_actions(-1)
         print_board()
 
-        if status != STATUS.OK:
-            print(emoji.emojize(":angry_face_with_horns: "), end='')
-            print(status)
-            print()
-            return_to_start()
+        for idx, t in enumerate(tiles):
+            
+            if t == ACTIONS.UP or t == ACTIONS.DOWN or t == ACTIONS.LEFT or t == ACTIONS.RIGHT:
+                status = move(t)
+            elif t == ACTIONS.COOK:
+                status = cook()
+            elif t == ACTIONS.CHOP:
+                status = chop()
+            elif t == ACTIONS.TAKE:
+                status = take()
+            elif t == ACTIONS.PUT:
+                status = put()
 
-        print("\n WAITING.... \n")
-        execute()
+            print_actions(idx)
+            print_board()
 
-    reach_end()
-    execute()
+            check_err_execute()
+            print("\n WAITING.... \n")
+
+
+        status = reach_end()
+        check_err_execute()
