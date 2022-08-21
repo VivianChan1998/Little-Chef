@@ -6,6 +6,7 @@ from Food import Food
 from User import User
 import serial
 import queue
+import TileCamera
 
 IS_CONNECT = False
 READ_CV = False
@@ -74,7 +75,8 @@ interaction_vector = [
 
 def read_tiles(isRead):
     if READ_CV:
-        #TODO
+        t = TileCamera.get_tiles()
+        print(t)
         print('read CV...')
     else:
         tiles.append(ACTIONS.RIGHT)
