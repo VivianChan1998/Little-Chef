@@ -9,7 +9,7 @@ import queue
 import TileCamera
 
 IS_CONNECT = False
-READ_CV = False
+READ_CV = True
 CURR_RECIPE = "HAMBURGER"
 
 '''
@@ -75,8 +75,27 @@ interaction_vector = [
 
 def read_tiles(isRead):
     if READ_CV:
-        t = TileCamera.get_tiles()
-        print(t)
+        tmp = TileCamera.get_tiles()
+        print(tmp)
+        for t in tmp:
+            print(t)
+            if t == 'U':
+                tiles.append(ACTIONS.UP)
+            elif t == 'D':
+                tiles.append(ACTIONS.DOWN)
+            elif t == 'R':
+                tiles.append(ACTIONS.RIGHT)
+            elif t == 'L':
+                tiles.append(ACTIONS.LEFT)
+            elif t == 'P':
+                tiles.append(ACTIONS.PUT)
+            elif t == 'T':
+                tiles.append(ACTIONS.TAKE)
+            elif t == 'K':
+                tiles.append(ACTIONS.COOK)
+            elif t == 'C':
+                tiles.append(ACTIONS.CHOP)
+        print(tiles)
         print('read CV...')
     else:
         tiles.append(ACTIONS.RIGHT)
@@ -189,7 +208,7 @@ def print_actions(tile_idx):
         elif tile == ACTIONS.CHOP:
             print(emoji.emojize(":kitchen_knife:"), end = '')
         elif tile == ACTIONS.PUT:
-            print(emoji.emojize(":palm_down_hand:"), end = '')
+            print(emoji.emojize(":grinning_face_with_big_eyes:"), end = '')
         elif tile == ACTIONS.TAKE:
             print(emoji.emojize(":palm_up_hand:"), end = '')
         print(' ', end='')
@@ -274,7 +293,9 @@ def check_err_execute():
         cmds.append("SOUND_ERR") #TEMP
         execute()
         return_to_start()
+        return False
     execute()
+    return True
 
 def execute():
     key = ''
@@ -343,8 +364,13 @@ if __name__ == "__main__":
         read_tiles(READ_CV)
         print_actions(-1)
         print_board()
+        print(tiles)
+        print(tile_idx)
 
-        for idx, t in enumerate(tiles):
+        for t in tiles:
+
+            tile_idx += 1
+            t = tiles[tile_idx]
             
             if t == ACTIONS.UP or t == ACTIONS.DOWN or t == ACTIONS.LEFT or t == ACTIONS.RIGHT:
                 status = move(t)
@@ -357,12 +383,13 @@ if __name__ == "__main__":
             elif t == ACTIONS.PUT:
                 status = put()
 
-            print_actions(idx)
+            print_actions(tile_idx)
             print_board()
 
-            check_err_execute()
+            if not check_err_execute():
+                break
             print("\n WAITING.... \n")
 
-
-        status = reach_end()
-        check_err_execute()
+        if tile_idx == len(tiles) -1:
+            status = reach_end()
+            check_err_execute()

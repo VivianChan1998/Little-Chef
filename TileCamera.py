@@ -4,9 +4,6 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 
 camera = PiCamera()
-tiles = []
-key = input("press enter to read >> ")
-
 DIR_TH = 10
 NUM1_LINE = 450
 ROW1_LINE = 600
@@ -17,8 +14,6 @@ ROW3_LINE = 1000
 
 
 def determine_dir(topLeft, topRight, bottomLeft, bottomRight):
-    print(topLeft)
-    print(bottomRight)
     if topLeft[1] - bottomLeft[1] > DIR_TH and topRight[1] - bottomRight[1] > DIR_TH:
         return 'D'
     elif bottomLeft[1] - topLeft[1] > DIR_TH and bottomRight[1] - topRight[1] > DIR_TH:
@@ -34,7 +29,6 @@ def sortX(e):
 
 def sortY(e):
     c = getCenter(e[0][0])
-    print(c)
     return c[1]/100
 
 def convert2XY(point):
@@ -47,6 +41,7 @@ def getCenter(corners):
     return (centerX, centerY)
 
 def get_tiles():
+    tiles = []
     rawCapture = PiRGBArray(camera)
 
     camera.capture(rawCapture, format="bgr")
@@ -119,8 +114,7 @@ def get_tiles():
 
 if __name__ == "__main__":
     while(True):
-        if key == '':
-            get_tiles()
-            tiles = []
+        get_tiles()
+
 
         
