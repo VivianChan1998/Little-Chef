@@ -1,6 +1,11 @@
 class Food:
     def __init__(self, station_n):
         food_dict = {
+            "BUN":{
+                "name": "BUN",
+                "instructions": "",
+                "isPreped": True
+            },
             "LETTUCE":{
                 "name": "LETTUCE",
                 "instructions": "chop",
@@ -11,19 +16,14 @@ class Food:
                 "instructions": "chop",
                 "isPreped": False
             },
-            "BUN":{
-                "name": "BUN",
-                "instructions": "",
-                "isPreped": True
+            "CHEESE":{
+                "name": "CHEESE",
+                "instructions": "chop",
+                "isPreped": False
             },
             "MEAT":{
                 "name": "MEAT",
                 "instructions": "cook",
-                "isPreped": False
-            },
-            "CHEESE":{
-                "name": "CHEESE",
-                "instructions": "chop",
                 "isPreped": False
             },
             "SPAGHETTI":{

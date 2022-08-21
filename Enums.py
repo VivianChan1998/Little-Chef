@@ -2,15 +2,15 @@ from enum import Enum
 
 class STATIONS(Enum):
     NONE = 0
-    STOVE = 1
+    COOK = 1
     CHOP = 2
     FINISH = 3
     OBSTACLE = 4
-    LETTUCE = 5
-    TOMATO = 6
-    BUN = 7
-    MEAT = 8
-    CHEESE = 9
+    BUN = 5
+    LETTUCE = 6
+    TOMATO = 7
+    CHEESE = 8
+    MEAT = 9
     SPAGHETTI = 10
     INTERACTION = 20
 

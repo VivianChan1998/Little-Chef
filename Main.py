@@ -1,9 +1,11 @@
-from jinja2 import Undefined
 import numpy as np
 import emoji
 from Enums import STATUS, STATIONS, ACTIONS
 from Food import Food
 from User import User
+
+READ_CV = False
+CURR_RECIPE = "HAMBURGER"
 
 '''
 Global Parameters Init
@@ -16,7 +18,12 @@ tiles = np.full(100, ACTIONS.NONE) # RPi code should break it down into one sing
 tile_idx = -1
 finished = []
 status = STATUS.OK
-
+RECIPES = {
+    "HAMBURGER": ["BUN", "LETTUCE", "TOMATO", "MEAT"],
+    "SALAD": ["LETTUCE", "TOMATO"],
+    "MACARONI": ["CHEESE", "SPAGHETTI"]
+}
+current_recipe = RECIPES[CURR_RECIPE]
 
 interaction_vector = [
     [( 0, 0),( 0, 0),( 0, 0),( 0, 0),( 0, 0),( 1, 0)],
@@ -27,39 +34,58 @@ interaction_vector = [
     [( 0, 1),(-1, 0),(-1, 0),(-1, 0),(-1, 0),( 0,-1)],
     [( 0, 1),(-1, 0),(-1, 0),(-1, 0),(-1, 0),( 0,-1)]] # make sure the location of finish counter
 
+def read_tiles(isRead):
+    if READ_CV:
+        #TODO
+        print('read CV...')
+    else:
+        tiles[0] = ACTIONS.RIGHT
+        tiles[1] = ACTIONS.UP
+        tiles[2] = ACTIONS.UP
+        tiles[3] = ACTIONS.RIGHT
+        tiles[4] = ACTIONS.RIGHT
+        tiles[5] = ACTIONS.UP
+        tiles[6] = ACTIONS.TAKE
+        tiles[7] = ACTIONS.DOWN
+        tiles[8] = ACTIONS.RIGHT
+        tiles[9] = ACTIONS.COOK
+        tiles[10] = ACTIONS.RIGHT
+        tiles[11] = ACTIONS.UP
+        tiles[12] = ACTIONS.UP
+        tiles[13] = ACTIONS.UP
+        tiles[14] = ACTIONS.PUT
+        tiles[15] = ACTIONS.DOWN
 
-'''
-TEMP
-'''
-board[5][4] = STATIONS.STOVE 
-board[2][3] = STATIONS.MEAT
-tiles[0] = ACTIONS.RIGHT
-tiles[1] = ACTIONS.UP
-tiles[2] = ACTIONS.UP
-tiles[3] = ACTIONS.RIGHT
-tiles[4] = ACTIONS.RIGHT
-tiles[5] = ACTIONS.UP
-tiles[6] = ACTIONS.TAKE
-tiles[7] = ACTIONS.DOWN
-tiles[8] = ACTIONS.TAKE
 
-''''''
+def define_board():
+    #TODO
+    board[5][4] = STATIONS.COOK
+    board[2][3] = STATIONS.MEAT
+    
+def return_to_start():
+    print('return to start')
+    #TODO
 
 def add_interaction_area():
     for i in range(7):
         for j in range(6):
-            if board[i][j] != STATIONS.NONE and board[i][j] != STATIONS.INTERACTION:
+            if board[i][j] != STATIONS.NONE and board[i][j] != STATIONS.INTERACTION and board[i][j] != STATIONS.OBSTACLE:
                 interaction_loc = (i + interaction_vector[i][j][0], j + interaction_vector[i][j][1])
                 board[interaction_loc[0]][interaction_loc[1]] = STATIONS.INTERACTION
     return 0
 
 def print_board():
     print('\n_________________________\n')
-    print("user hold: ")
+    print("user hold: ", end=' ')
     if user.isHolding:
         print(user.hold.name)
     else:
         print("None")
+    print("finished:", end=' ')
+    for i in range(len(finished)):
+        print(finished[i].name + ' ')
+    print()
+
 
     for j in range(6):
         tmp = str(board[0][j])[9:12]
@@ -82,7 +108,7 @@ def print_board():
     
     print('_________________________\n')
 
-def print_actions():
+def print_actions(tile_idx):
     for i in range(len(tiles)):
         if tiles[i] == ACTIONS.NONE:
             print()
@@ -134,11 +160,24 @@ def move(dir):
     return STATUS.OK
 
 def cook():
-    #TODO determine error and return status
+    x = user.location[0]
+    y = user.location[1]
+    if board[x][y] != STATIONS.INTERACTION:
+        return STATUS.ERR_INTERACTION
+    s = get_interacting_station(x,y)
+    print(s)
+    if s != STATIONS.COOK and user.hold.instructions != "cook":
+        return STATUS.ERR_ACTION
     return STATUS.OK
 
 def chop():
-    #TODO determine error and return status
+    x = user.location[0]
+    y = user.location[1]
+    if board[x][y] != STATIONS.INTERACTION:
+        return STATUS.ERR_INTERACTION
+    s = get_interacting_station(x,y)
+    if s != STATIONS.CHOP and user.hold.instructions != "chop":
+        return STATUS.ERR_ACTION
     return STATUS.OK
 
 def take():
@@ -154,19 +193,36 @@ def take():
     return STATUS.OK
 
 def put():
-    #TODO determine error and return status
+    x = user.location[0]
+    y = user.location[1]
+    if board[x][y] != STATIONS.INTERACTION:
+        return STATUS.ERR_INTERACTION
+    if (x,y) != (1,5):
+        return STATUS.ERR_ACTION
+    finished.append(user.hold)
+    user.hold = None
+    user.isHolding = False
     return STATUS.OK
+
+def reach_end():
+    #TODO
+    #unfinish
+    #wrong thing or more thing?
+    return STATUS.OK
+
 
 if __name__ == "__main__":
 
+    print("\n\n========= MAKING: " + CURR_RECIPE + " =========")
+
+    define_board()
     add_interaction_area()
-    print_actions()
+    read_tiles(READ_CV)
+    print_actions(-1)
     print_board()
 
-    while True:
+    for idx,t in enumerate(tiles):
         if wait_next() == '':
-            tile_idx += 1
-            t = tiles[tile_idx]
             if t == ACTIONS.UP or t == ACTIONS.DOWN or t == ACTIONS.LEFT or t == ACTIONS.RIGHT:
                 status = move(t)
             elif t == ACTIONS.COOK:
@@ -178,12 +234,12 @@ if __name__ == "__main__":
             elif t == ACTIONS.PUT:
                 status = put()
 
-            print_actions()
+            print_actions(idx)
             print_board()
 
             if status != STATUS.OK:
                 print(emoji.emojize(":angry_face_with_horns: "), end='')
                 print(status)
                 print()
-                exit() # TEMP
-        
+                return_to_start()
+    reach_end()
