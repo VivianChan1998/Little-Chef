@@ -3,6 +3,7 @@ import emoji
 from Enums import STATUS, STATIONS, ACTIONS
 from Food import Food
 from User import User
+import serial
 
 READ_CV = False
 CURR_RECIPE = "HAMBURGER"
@@ -213,6 +214,9 @@ def reach_end():
 
 if __name__ == "__main__":
 
+    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+    ser.reset_input_buffer()
+
     print("\n\n========= MAKING: " + CURR_RECIPE + " =========")
 
     define_board()
@@ -222,6 +226,10 @@ if __name__ == "__main__":
     print_board()
 
     for idx,t in enumerate(tiles):
+        ser.write(b"hello")
+        if ser.in_waiting > 0:
+            line = ser.readline().decode('utf-8').rstrip()
+            print(line)
         if wait_next() == '':
             if t == ACTIONS.UP or t == ACTIONS.DOWN or t == ACTIONS.LEFT or t == ACTIONS.RIGHT:
                 status = move(t)

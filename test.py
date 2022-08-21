@@ -1,12 +1,41 @@
 import cv2
 import matplotlib.pyplot as plt
-import emoji
-from numpy import tile
-#import cv2.aruco as aruco
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 
-dir_th = 10
+camera = PiCamera()
+tiles = []
+key = input("press enter to read >> ")
+
+DIR_TH = 10
+NUM1_LINE = 450
+ROW1_LINE = 600
+NUM2_LINE = 750
+ROW2_LINE = 900
+NUM3_LINE = 900
+ROW3_LINE = 1000
+
+
+def determine_dir(topleft, topright, bottomleft, bottomright):
+    print(topLeft)
+    print(bottomRight)
+    if topLeft[1] - bottomLeft[1] > DIR_TH and topRight[1] - bottomRight[1] > DIR_TH:
+        return 'D'
+    elif bottomLeft[1] - topLeft[1] > DIR_TH and bottomRight[1] - topRight[1] > DIR_TH:
+        return 'U'
+    elif bottomLeft[1] - bottomRight[1] > DIR_TH and topLeft[1] - topRight[1] > DIR_TH:
+        return 'R'
+    else:
+        return 'L'
+
+def sortX(e):
+    c = getCenter(e[0][0])
+    return c[0]
+
+def sortY(e):
+    c = getCenter(e[0][0])
+    print(c)
+    return c[1]/100
 
 def convert2XY(point):
     return (int(point[0]), int(point[1]))
@@ -17,31 +46,6 @@ def getCenter(corners):
     centerY = (topLeft[1] + bottomRight[1]) / 2
     return (centerX, centerY)
 
-
-camera = PiCamera()
-tiles = []
-key = input("press enter to read >> ")
-
-def determine_dir(topleft, topright, bottomleft, bottomright):
-    print(topLeft)
-    print(bottomRight)
-    if topLeft[1] - bottomLeft[1] > dir_th and topRight[1] - bottomRight[1] > dir_th:
-        return 'D'
-    elif bottomLeft[1] - topLeft[1] > dir_th and bottomRight[1] - topRight[1] > dir_th:
-        return 'U'
-    elif bottomLeft[1] - bottomRight[1] > dir_th and topLeft[1] - topRight[1] > dir_th:
-        return 'R'
-    else:
-        return 'L'
-
-def sortX(e):
-    print(e[0][0])
-    c = getCenter(e[0][0])
-    return c[0]
-
-def sortY(e):
-    c = getCenter(e[0][0])
-    return c[1]
 
 while(True):
     if key == '':
@@ -61,9 +65,10 @@ while(True):
             
             markers = zip(corners, ids)
             markers = list(markers)
-            print(markers)
-            markers.sort(key = sortX)
-            markers.sort(key = sortY)
+            markers.sort(reverse=True, key = sortX)
+            #markers.sort(key = sortY)
+            
+            #TODO split rows...
 
             count = 0
             
@@ -99,12 +104,19 @@ while(True):
                 cv2.putText(frame, dir, (topLeft[0], topLeft[1] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
                 cv2.putText(frame, str(count), (bottomRight[0], bottomRight[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
                 count += 1
-        frameS = cv2.resize(frame, (960,544))
+                cv2.line(frame, (0, NUM1_LINE), (1600,NUM1_LINE), (255,0,0), 2)
+                cv2.line(frame, (0, ROW1_LINE), (1600,ROW1_LINE), (0,255,0), 2)
+                cv2.line(frame, (0, NUM2_LINE), (1600,NUM2_LINE), (255,0,0), 2)
+                cv2.line(frame, (0, ROW2_LINE), (1600,ROW2_LINE), (0,255,0), 2)
+                cv2.line(frame, (0, NUM3_LINE), (1600,NUM3_LINE), (255,0,0), 2)
+                cv2.line(frame, (0, ROW3_LINE), (1600,ROW3_LINE), (0,255,0), 2)
+                
+        #frameS = cv2.resize(frame, (960,544))
         
         
         print(tiles)
 
-        plt.imshow(frameS)
+        plt.imshow(frame)
         plt.show()
 
         tiles = []
