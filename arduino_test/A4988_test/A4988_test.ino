@@ -1,9 +1,10 @@
 // defines pins numbers
 #define DELAY 300000
-#define DELAY2 5
-#define STEP 200
+#define DELAY2 2
+#define STEP 500
 const int dirPin[6] = {8, 30, 36, 42, 48, 52}; 
 const int stepPin[6] = {9, 28, 34, 40, 46, 50};
+bool d;
 
 void setup() {
   // Sets the two pins as Outputs
@@ -15,11 +16,13 @@ void setup() {
     digitalWrite(stepPin[i], LOW);
   }
   Serial.println("start");
+  d = 0;
 }
 void loop() {
   Serial.println("one cycle");
   // Makes 200 pulses for making one full cycle rotation
-  //digitalWrite(dirPin,HIGH);
+  d = !d;
+  digitalWrite(dirPin[0],d? LOW:HIGH);
   for(int i = 0; i < 1; i++){
     Serial.print("Layer");
     Serial.println(i);
@@ -60,6 +63,6 @@ void loop() {
     delayMicroseconds(DELAY);
   }
   */
-  delay(5000);
+  //delay(5000);
 
 }

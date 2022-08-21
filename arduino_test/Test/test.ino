@@ -1,11 +1,11 @@
 #include <FastLED.h>
 #define LED_PIN     6
-#define NUM_LEDS    50
+#define NUM_LEDS    100
 CRGB leds[NUM_LEDS];
 
 
-#define X_DELAY 5
-#define Y_DELAY 5
+#define X_DELAY 2
+#define Y_DELAY 2
 
 #define X_DIR 8
 #define X_STEP 9
@@ -35,8 +35,8 @@ void setup() {
     digitalWrite(Y_DIR, HIGH);
 
     FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
-
-    /*TEMP*/
+    /*
+    
     Serial.println("X1");
     move_blocks('X', 1);
     delay(2000);
@@ -51,7 +51,7 @@ void setup() {
     delay(2000);
     Serial.println("=========test done=========");
     
-
+    */
     Serial.println("start");
 }
 void loop() {
@@ -66,14 +66,13 @@ void loop() {
     {
         int m = (data.substring(6)).toInt();
         move_blocks(data[5], m);
-        Serial.println('DONE');
+        Serial.println("DONE");
     }
     else if(data[0] == 'L')
     {
-        /*
-        leds[0] = CRGB(0, 255, 100);
-        leds[1] = CRGB(0, 255, 100);
-        */
+        
+        for(int i=0; i<50;i++) leds[i] = CRGB(0, 255, 100);
+        
         FastLED.show();
     }
   }
@@ -82,7 +81,11 @@ void loop() {
 
 void move_blocks(char dimension, int move) // could be negative val, [-5 ~ +5], no 0
 {
-    Serial.print('move ' + dimension, + ' ' + move); //TEMP
+    Serial.print("move ");
+    Serial.print(dimension);
+    Serial.print(' ');
+    Serial.print(move);
+    Serial.println();
 
     int steps = move *  (dimension == 'X'? abs(X_STEP_ONE_BLOCK) : abs(Y_STEP_ONE_BLOCK));
     int pin_dir = dimension == 'X'? X_DIR : Y_DIR;
@@ -90,10 +93,12 @@ void move_blocks(char dimension, int move) // could be negative val, [-5 ~ +5], 
     int d = dimension == 'X'? X_DELAY : Y_DELAY;
     bool dir = dimension == 'X'? X_FORWARD_DIR : Y_FROWARD_DIR;
     dir = move > 0? dir : !dir;
+    Serial.println(steps);
 
     digitalWrite(pin_dir, dir);
-    for(; steps > 0; steps--)
+    for(; steps != 0; steps+=(dir? -1:1))
     {
+      Serial.print('-');
         digitalWrite(pin_step, HIGH); 
         delay(d);
         digitalWrite(pin_step, LOW); 
