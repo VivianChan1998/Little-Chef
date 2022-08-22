@@ -1,3 +1,4 @@
+from sys import breakpointhook
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,14 +19,15 @@ Y_list = [200,320,450,600,800,900]
 X_list = [250,400,600,750,800,900,1100,1400]
 
 TILE_MAP = [
-    [(1400, 200), (1100,200), (800, 200), (600, 200), (400, 200), (250,200)],
-    [(1400, 320), (1100,320), (800, 320), (600, 320), (400, 320), (250,320)],
+    [(1450, 200), (1350,200), (1200,200), (1000, 200), (800, 200), (600, 200), (450,200), (200,200)],
+    [(1450, 320), (1350,320), (1200,320), (1000, 320), (800, 320), (600, 320), (450,320), (200,320)],
 
-    [(1400, 600), (1100,600), (800, 600), (600, 600), (400, 600), (250,600)],
-    [(1400, 600), (1100,600), (800, 600), (600, 600), (400, 600), (250,600)],
+    [(1450, 450), (1350,450), (1200,450), (1000, 450), (800, 450), (600, 450), (450,450), (200,450)],
+    [(1450, 600), (1350,600), (1200,600), (1000, 600), (800, 600), (600, 600), (450,600), (200,600)],
 
-    [(1400, 600), (1100,600), (800, 600), (600, 600), (400, 600), (250,600)],
-    [(1400, 600), (1100,600), (800, 600), (600, 600), (400, 600), (250,600)]
+    [(1450, 800), (1350,800), (1200,800), (1000, 800), (800, 800), (600, 800), (450,800), (200,800)],
+    [(1450, 900), (1350,900), (1200,900), (1000, 900), (800, 900), (600, 900), (450,900), (200,900)]
+    
 ]
 
 
@@ -65,8 +67,15 @@ def take_closest(myList, myNumber):
     else:
         return pos-1
 
+def calc_dist(pos, target):
+    x_dist = target[0]-pos[0]
+    y_dist = target[1]-pos[1]
+    #dist = (pow(x_dist, 2) + pow(y_dist, 2)) ** 1/2
+
+    return x_dist, y_dist
+
 def get_tiles():
-    tile_board = np.full((6, 8), 'N', dtype=object)
+    tile_board = np.full((6, 8), None)
     tiles = []
     rawCapture = PiRGBArray(camera)
 
@@ -81,25 +90,27 @@ def get_tiles():
         ids = ids.flatten()
         corners = [c.reshape(4,2) for c in corners]
         centers = [getCenter(c) for c in corners]
-        board_pos = np.zeros((len(corners),2), dtype=int)
-        markers = zip(corners, ids, centers, board_pos)
+        markers = zip(corners, ids, centers, np.zeros(len(corners)), np.zeros(len(corners)))
         markers = list(markers)
-        #markers.sort(reverse=True, key = sortX)
-        for m in markers:
-            m = m[0]
-            c = m[2]
-            print(c)
-            posX = take_closest(X_list, c[0])
-            posY = take_closest(Y_list, c[1])
-            m[3][0] = posX
-            m[3][1] = posY
-            print(m[3])
-
-        markers.sort(reverse = True, key=sortX)
-        markers.sort(key=sortY)
+        
+        for idx,m in enumerate(markers):
+            for i in range(6):
+                for j in range(8):
+                    c = m[2]
+                    if c[0] > TILE_MAP[i][j][0] and c[1] > TILE_MAP[i][j][1]:
+                        markers[idx] =list(markers[idx])
+                        markers[idx][3] = i
+                        markers[idx][4] = j
+                        break
 
         count = 0
-        
+
+        for i in range(6):
+            for j in range(8):
+                cv2.putText(frame, str(i), (TILE_MAP[i][j][0] -10, TILE_MAP[i][j][1] -20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,255), 2)
+                cv2.putText(frame, str(j), (TILE_MAP[i][j][0] +10, TILE_MAP[i][j][1] -20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,255), 2)
+                cv2.circle(frame, TILE_MAP[i][j], radius=10, color=(0, 255, 255), thickness=-1)
+
         for m in markers:
             corners = m[0].reshape((4,2))
             (topLeft, topRight, bottomRight, bottomLeft) = corners
@@ -111,36 +122,35 @@ def get_tiles():
             markerID = m[1]
             if markerID == 0:
                 dir = determine_dir(topLeft, topRight, bottomRight, bottomLeft)
-                tiles.append(dir)
+                tile_board[m[3]][m[4]] = dir
             elif markerID == 1:
-                tiles.append('P')
+                tile_board[m[3]][m[4]] = 'P'
             elif markerID == 2:
-                tiles.append('2')
+                tile_board[m[3]][m[4]] = '2'
             elif markerID == 3:
-                tiles.append('3')
+                tile_board[m[3]][m[4]] = '3'
             elif markerID == 4:
-                tiles.append('4')
+                tile_board[m[3]][m[4]] = '4'
             elif markerID == 5:
-                tiles.append('5')
+                tile_board[m[3]][m[4]] = '5'
             elif markerID == 6:
-                tiles.append('T')
+                tile_board[m[3]][m[4]] = 'T'
             elif markerID == 7:
-                tiles.append('K')
+                tile_board[m[3]][m[4]] = 'K'
             elif markerID == 8:
-                tiles.append('C')
-            cv2.putText(frame, str(markerID), (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
-            cv2.putText(frame, dir, (topLeft[0], topLeft[1] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
+                tile_board[m[3]][m[4]] = 'C'
             cv2.putText(frame, str(count), (bottomRight[0], bottomRight[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
+            
             count += 1
+            '''
             cv2.line(frame, (0, NUM1_LINE), (1600,NUM1_LINE), (255,0,0), 2)
             cv2.line(frame, (0, ROW1_LINE), (1600,ROW1_LINE), (0,255,0), 2)
             cv2.line(frame, (0, NUM2_LINE), (1600,NUM2_LINE), (255,0,0), 2)
             cv2.line(frame, (0, ROW2_LINE), (1600,ROW2_LINE), (0,255,0), 2)
             cv2.line(frame, (0, NUM3_LINE), (1600,NUM3_LINE), (255,0,0), 2)
             cv2.line(frame, (0, ROW3_LINE), (1600,ROW3_LINE), (0,255,0), 2)
-            
-    #frameS = cv2.resize(frame, (960,544))
-    
+            '''
+        print(tile_board)
     
     print(tiles)
 
