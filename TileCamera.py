@@ -1,16 +1,32 @@
 import cv2
+import numpy as np
 import matplotlib.pyplot as plt
 from picamera.array import PiRGBArray
 from picamera import PiCamera
+from bisect import bisect_left
 
 camera = PiCamera()
 DIR_TH = 10
-NUM1_LINE = 450
-ROW1_LINE = 600
-NUM2_LINE = 750
-ROW2_LINE = 900
-NUM3_LINE = 900
-ROW3_LINE = 1000
+NUM1_LINE = 200
+ROW1_LINE = 300
+NUM2_LINE = 450
+ROW2_LINE = 600
+NUM3_LINE = 800
+ROW3_LINE = 900
+
+Y_list = [200,320,450,600,800,900]
+X_list = [250,400,600,750,800,900,1100,1400]
+
+TILE_MAP = [
+    [(1400, 200), (1100,200), (800, 200), (600, 200), (400, 200), (250,200)],
+    [(1400, 320), (1100,320), (800, 320), (600, 320), (400, 320), (250,320)],
+
+    [(1400, 600), (1100,600), (800, 600), (600, 600), (400, 600), (250,600)],
+    [(1400, 600), (1100,600), (800, 600), (600, 600), (400, 600), (250,600)],
+
+    [(1400, 600), (1100,600), (800, 600), (600, 600), (400, 600), (250,600)],
+    [(1400, 600), (1100,600), (800, 600), (600, 600), (400, 600), (250,600)]
+]
 
 
 def determine_dir(topLeft, topRight, bottomLeft, bottomRight):
@@ -24,12 +40,10 @@ def determine_dir(topLeft, topRight, bottomLeft, bottomRight):
         return 'L'
 
 def sortX(e):
-    c = getCenter(e[0][0])
-    return c[0]
+    return e[3][0]
 
 def sortY(e):
-    c = getCenter(e[0][0])
-    return c[1]/100
+    return e[3][1]
 
 def convert2XY(point):
     return (int(point[0]), int(point[1]))
@@ -40,7 +54,19 @@ def getCenter(corners):
     centerY = (topLeft[1] + bottomRight[1]) / 2
     return (centerX, centerY)
 
+def take_closest(myList, myNumber):
+    pos = bisect_left(myList, int(myNumber))
+    if pos == 0 or pos == len(myList):
+        return pos
+    before = myList[pos - 1]
+    after = myList[pos]
+    if after - myNumber < myNumber - before:
+        return pos
+    else:
+        return pos-1
+
 def get_tiles():
+    tile_board = np.full((6, 8), 'N', dtype=object)
     tiles = []
     rawCapture = PiRGBArray(camera)
 
@@ -53,13 +79,24 @@ def get_tiles():
 
     if len(corners) > 0:
         ids = ids.flatten()
-        
-        markers = zip(corners, ids)
+        corners = [c.reshape(4,2) for c in corners]
+        centers = [getCenter(c) for c in corners]
+        board_pos = np.zeros((len(corners),2), dtype=int)
+        markers = zip(corners, ids, centers, board_pos)
         markers = list(markers)
-        markers.sort(reverse=True, key = sortX)
-        #markers.sort(key = sortY)
-        
-        #TODO split rows...
+        #markers.sort(reverse=True, key = sortX)
+        for m in markers:
+            m = m[0]
+            c = m[2]
+            print(c)
+            posX = take_closest(X_list, c[0])
+            posY = take_closest(Y_list, c[1])
+            m[3][0] = posX
+            m[3][1] = posY
+            print(m[3])
+
+        markers.sort(reverse = True, key=sortX)
+        markers.sort(key=sortY)
 
         count = 0
         

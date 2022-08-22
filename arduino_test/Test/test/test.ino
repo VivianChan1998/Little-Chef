@@ -53,8 +53,10 @@ void setup() {
     
     */
     Serial.println("start");
+    Serial.println("BUTTON");
 }
 void loop() {
+  
 
   if (Serial.available() > 0)
   {
@@ -70,10 +72,12 @@ void loop() {
     }
     else if(data[0] == 'L')
     {
-        
-        for(int i=0; i<50;i++) leds[i] = CRGB(0, 255, 100);
+        long c = strtol(data.substring(5).c_str(), NULL, 16);
+        Serial.println(c);
+        for(int i=0; i<50;i++) leds[i] = c;
         
         FastLED.show();
+        Serial.println("DONE");
     }
   }
 
@@ -98,7 +102,6 @@ void move_blocks(char dimension, int move) // could be negative val, [-5 ~ +5], 
     digitalWrite(pin_dir, dir);
     for(; steps != 0; steps+=(dir? -1:1))
     {
-      Serial.print('-');
         digitalWrite(pin_step, HIGH); 
         delay(d);
         digitalWrite(pin_step, LOW); 

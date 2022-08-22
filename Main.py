@@ -8,8 +8,8 @@ import serial
 import queue
 import TileCamera
 
-IS_CONNECT = False
-READ_CV = True
+IS_CONNECT = True
+READ_CV = False
 CURR_RECIPE = "HAMBURGER"
 
 '''
@@ -31,16 +31,17 @@ RECIPES = {
 current_recipe = RECIPES[CURR_RECIPE]
 ser = ''
 cmds = []
+COLOR_LIB = {"BUN": "ff6a00", "LETTUCE": "00ff00", "TOMATO":"ff0000", "MEAT":"ff1010", "SPAGHETTI":"f7f7f2"}
+COLOR_NONE = "000000"
 
 '''
 BFS Function
 '''
 dRow = [-1, 0, 1,  0];
 dCol = [ 0, 1, 0, -1];
-vis = np.zeros((7,6))
-dist = np.full((7,6), 1000)
 
-def BFS(vis, row, col, pred):
+
+def BFS(vis, row, col, pred, dist):
     q = queue.Queue()
     q.put((row, col))
     vis[row][col] = True
@@ -83,7 +84,8 @@ def read_tiles(isRead):
             if t == '2' or t == '3' or t == '4':
                 repeat = int(t) - 1
                 print(repeat)
-                t = tmp[i + 1]
+                if i!=len(tmp)-1:
+                    t = tmp[i + 1]
             if t == 'U':
                 for l in range(repeat):
                     tiles.append(ACTIONS.UP)
@@ -130,12 +132,14 @@ def read_tiles(isRead):
 def define_board():
     #TODO
     board[5][4] = STATIONS.COOK
-    board[2][3] = STATIONS.MEAT
+    board[2][3] = STATIONS.LETTUCE
     
 def return_to_start():
     print('return to start ============ ')
     pred = np.empty((7,6), dtype=object)
-    BFS(vis, user.location[0], user.location[1], pred)
+    vis = np.zeros((7,6))
+    dist = np.full((7,6), 1000)
+    BFS(vis, user.location[0], user.location[1], pred, dist)
     path = []
     crawl = (6,0)
     path.append(crawl)
@@ -321,26 +325,24 @@ def send_wait_cmd(ser):
     # LED_T -> LED_B -> MOVE
     for c in cmds:
         print(c)
-        if c[0] == 'L':
-            print("LED")
-        elif c[0] == 'S':
+        if c[0] == 'S':
             print("SOUND")
         else:
             ser.write(c.encode('utf-8'))
-        line = ""
-        while True:
-            if ser.in_waiting > 0:
-                line += ser.readline().decode('utf-8').rstrip()
-                print(line)
-                if line == "DONE":
-                    break
+            line = ""
+            while True:
+                if ser.in_waiting > 0:
+                    line = ser.readline().decode('utf-8').rstrip()
+                    print(line)
+                    if line == "DONE":
+                        break
     print("------------ cmd done ------------")
         
 def wait_for_button():
     while True:
         if(IS_CONNECT):
             if ser.in_waiting > 0:
-                line += ser.readline().decode('utf-8').rstrip()
+                line = ser.readline().decode('utf-8').rstrip()
                 print(line)
                 if line == "BUTTON":
                     break
@@ -391,14 +393,18 @@ if __name__ == "__main__":
                 status = take()
             elif t == ACTIONS.PUT:
                 status = put()
+            
+            cmds.append("LEDB_" + (COLOR_NONE if not user.isHolding else COLOR_LIB[user.hold.name]))
 
             print_actions(tile_idx)
             print_board()
 
             if not check_err_execute():
+                cmds.append("LEDB_" + COLOR_NONE)
                 break
             print("\n WAITING.... \n")
 
         if tile_idx == len(tiles) -1:
             status = reach_end()
+            cmds.append("LEDB_" + COLOR_NONE)
             check_err_execute()
