@@ -6,10 +6,10 @@ from Food import Food
 from User import User
 import serial
 import queue
-import TileCamera
+#import TileCamera
 
-IS_CONNECT = True
-READ_CV = True
+IS_CONNECT = False
+READ_CV = False
 CURR_RECIPE = "HAMBURGER"
 
 '''
@@ -130,9 +130,12 @@ def read_tiles(isRead):
 
 
 def define_board():
-    #TODO
-    board[5][4] = STATIONS.COOK
-    board[2][3] = STATIONS.LETTUCE
+    
+    board[1][2] = STATIONS.COOK
+    board[4][5] = STATIONS.CHOP
+    board[4][0] = STATIONS.MEAT
+    board[6][5] = STATIONS.LETTUCE
+    board[2][0] = STATIONS.BUN
     
 def return_to_start():
     print('return to start ============ ')

@@ -74,7 +74,7 @@ void loop() {
     {
         long c = strtol(data.substring(5).c_str(), NULL, 16);
         Serial.println(c);
-        for(int i=0; i<50;i++) leds[i] = c;
+        for(int i=0; i<120;i++) leds[i] = c;
         
         FastLED.show();
         Serial.println("DONE");
