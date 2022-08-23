@@ -36,10 +36,10 @@ def determine_dir(topLeft, topRight, bottomLeft, bottomRight):
         return 'D'
     elif bottomLeft[1] - topLeft[1] > DIR_TH and bottomRight[1] - topRight[1] > DIR_TH:
         return 'U'
-    elif bottomLeft[1] - bottomRight[1] > DIR_TH and topLeft[1] - topRight[1] > DIR_TH:
-        return 'R'
-    else:
+    elif topLeft[0] - bottomLeft[0] > DIR_TH and topRight[0] - bottomRight[0] > DIR_TH:
         return 'L'
+    else:
+        return 'R'
 
 def sortX(e):
     return e[3][0]
@@ -120,38 +120,43 @@ def get_tiles():
             bottomRight = convert2XY(bottomRight)
             dir = 'X'
             markerID = m[1]
+            print(m)
+            i = int(m[3])
+            j = int(m[4])
             if markerID == 0:
                 dir = determine_dir(topLeft, topRight, bottomRight, bottomLeft)
-                tile_board[m[3]][m[4]] = dir
+                tile_board[i][j] = dir
             elif markerID == 1:
-                tile_board[m[3]][m[4]] = 'P'
+                tile_board[i][j] = 'P'
             elif markerID == 2:
-                tile_board[m[3]][m[4]] = '2'
+                tile_board[i][j] = '2'
             elif markerID == 3:
-                tile_board[m[3]][m[4]] = '3'
+                tile_board[i][j] = '3'
             elif markerID == 4:
-                tile_board[m[3]][m[4]] = '4'
+                tile_board[i][j] = '4'
             elif markerID == 5:
-                tile_board[m[3]][m[4]] = '5'
+                tile_board[i][j] = '5'
             elif markerID == 6:
-                tile_board[m[3]][m[4]] = 'T'
+                tile_board[i][j] = 'T'
             elif markerID == 7:
-                tile_board[m[3]][m[4]] = 'K'
+                tile_board[i][j] = 'K'
             elif markerID == 8:
-                tile_board[m[3]][m[4]] = 'C'
+                tile_board[i][j] = 'C'
             cv2.putText(frame, str(count), (bottomRight[0], bottomRight[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
             
             count += 1
-            '''
-            cv2.line(frame, (0, NUM1_LINE), (1600,NUM1_LINE), (255,0,0), 2)
-            cv2.line(frame, (0, ROW1_LINE), (1600,ROW1_LINE), (0,255,0), 2)
-            cv2.line(frame, (0, NUM2_LINE), (1600,NUM2_LINE), (255,0,0), 2)
-            cv2.line(frame, (0, ROW2_LINE), (1600,ROW2_LINE), (0,255,0), 2)
-            cv2.line(frame, (0, NUM3_LINE), (1600,NUM3_LINE), (255,0,0), 2)
-            cv2.line(frame, (0, ROW3_LINE), (1600,ROW3_LINE), (0,255,0), 2)
-            '''
         print(tile_board)
     
+    for i in range(3):
+        for j in range(8):
+            n = tile_board[i*2][j]
+            t = tile_board[i*2+1][j]
+            if t != None:
+                if n != None:
+                    tiles.append(n)
+                tiles.append(t)
+
+
     print(tiles)
 
     plt.imshow(frame)
