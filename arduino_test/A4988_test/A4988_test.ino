@@ -2,14 +2,14 @@
 #define DELAY 300000
 #define DELAY2 2
 #define STEP 500
-const int dirPin[6] = {8, 30, 36, 42, 48, 52}; 
-const int stepPin[6] = {9, 28, 34, 40, 46, 50};
+const int dirPin[6] = {8, 10, 36, 42, 48, 52}; 
+const int stepPin[6] = {9, 11, 34, 40, 46, 50};
 bool d;
 
 void setup() {
   // Sets the two pins as Outputs
   Serial.begin(9600);
-  for(int i = 0; i < 1; i++){
+  for(int i = 0; i < 2; i++){
     pinMode(stepPin[i], OUTPUT); 
     pinMode(dirPin[i], OUTPUT);
     digitalWrite(dirPin[i], HIGH);
@@ -23,7 +23,7 @@ void loop() {
   // Makes 200 pulses for making one full cycle rotation
   d = !d;
   digitalWrite(dirPin[0],d? LOW:HIGH);
-  for(int i = 0; i < 1; i++){
+  for(int i = 0; i < 2; i++){
     Serial.print("Layer");
     Serial.println(i);
     for(int x = 0; x < STEP; x++) {
