@@ -9,7 +9,7 @@ import queue
 import TileCamera
 
 IS_CONNECT = True
-READ_CV = False
+READ_CV = True
 CURR_RECIPE = "HAMBURGER"
 
 '''
