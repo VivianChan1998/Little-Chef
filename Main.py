@@ -31,7 +31,7 @@ RECIPES = {
 current_recipe = RECIPES[CURR_RECIPE]
 ser = ''
 cmds = []
-COLOR_LIB = {"BUN": "ff6a00", "LETTUCE": "00ff00", "TOMATO":"ff0000", "MEAT":"ff1010", "SPAGHETTI":"f7f7f2"}
+COLOR_LIB = {"BUN": "ff6a00", "LETTUCE": "00ff00", "TOMATO":"ff0000", "MEAT":"ff1010", "SPAGHETTI":"f7f7f2", "CHEESE": "ffffff"}
 COLOR_NONE = "000000"
 
 '''
