@@ -1,8 +1,10 @@
 #include <FastLED.h>
-#define LED_PIN     6
-#define NUM_LEDS    100
-CRGB leds[NUM_LEDS];
-
+#define B_PIN     6
+#define T_PIN     5
+#define B_NUM_LEDS    100
+#define T_NUM_LEDS    100
+CRGB b_leds[NUM_LEDS];
+CRGB t_leds[NUM_LEDS];
 
 #define X_DELAY 2
 #define Y_DELAY 2
@@ -12,19 +14,22 @@ CRGB leds[NUM_LEDS];
 #define Y_DIR 10
 #define Y_STEP 11
 
-#define X_STEP_ONE_BLOCK 200
-#define Y_STEP_ONE_BLOCK 200
+#define X_STEP_ONE_BLOCK 400
+#define Y_STEP_ONE_BLOCK 400
 #define X_FORWARD_DIR 1 // 1 or 0
 #define Y_FROWARD_DIR 1 // 1 or 0
 
 int x_count = 0;
 int y_count = 0;
 
+int tile_x[3] = {14, 16, 17}
+int tile_y[8] = {20, 22, 24, 26, 28, 30, 32, 34}
+
 void setup() {
   // Sets the two pins as Outputs
     Serial.begin(9600);
   
-    pinMode(X_STEP, OUTPUT); 
+    pinMode(X_STEP, OUTPUT);
     pinMode(X_DIR, OUTPUT);
     digitalWrite(X_STEP, LOW);
     digitalWrite(X_DIR, HIGH);
@@ -34,27 +39,13 @@ void setup() {
     digitalWrite(Y_STEP, LOW);
     digitalWrite(Y_DIR, HIGH);
 
-    FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
-    /*
-    
-    Serial.println("X1");
-    move_blocks('X', 1);
-    delay(2000);
-    Serial.println("X2");
-    move_blocks('X', 2);
-    delay(2000);
-    Serial.println("Y1");
-    move_blocks('Y', 1);
-    delay(2000);
-    Serial.println("Y-1");
-    move_blocks('Y', -1);
-    delay(2000);
-    Serial.println("=========test done=========");
-    
-    */
+    FastLED.addLeds<WS2812, T_PIN, GRB>(leds, NUM_LEDS);
+    FastLED.addLeds<WS2812, B_PIN, GRB>(leds, NUM_LEDS);
+
     Serial.println("start");
     Serial.println("BUTTON");
 }
+
 void loop() {
   
 
@@ -72,12 +63,29 @@ void loop() {
     }
     else if(data[0] == 'L')
     {
+      if(data[4] == 'B')
+      {
         long c = strtol(data.substring(5).c_str(), NULL, 16);
         Serial.println(c);
-        for(int i=0; i<120;i++) leds[i] = c;
+        for(int i=14; i<21;i++) b_leds[i] = c;
         
         FastLED.show();
         Serial.println("DONE");
+      }
+      else
+      {
+        //long c = strtol(data.substring(5).c_str(), NULL, 16);
+        int posx = tile_x[data[5] - '0'];
+        int posy = tile_y[data[6] - '0'];
+        Serial.println(posx);
+        Serial.println(posy);
+        t_leds[posx] = "ffffff";
+        t_leds[posx] = "ffffff";
+        
+        FastLED.show();
+        Serial.println("DONE");
+      }
+        
     }
   }
 

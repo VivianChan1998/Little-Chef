@@ -6,6 +6,8 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 from bisect import bisect_left
 
+SHOW = False
+
 camera = PiCamera()
 DIR_TH = 10
 NUM1_LINE = 200
@@ -130,23 +132,23 @@ def get_tiles():
             j = int(m[4])
             if markerID == 0:
                 dir = determine_dir(topLeft, topRight, bottomRight, bottomLeft)
-                tile_board[i][j] = dir
+                tile_board[i][j] = (dir, (i,j))
             elif markerID == 1:
-                tile_board[i][j] = 'P'
+                tile_board[i][j] = ('P', (i,j))
             elif markerID == 2:
-                tile_board[i][j] = '2'
+                tile_board[i][j] = ('2', (i,j))
             elif markerID == 3:
-                tile_board[i][j] = '3'
+                tile_board[i][j] = ('3', (i,j))
             elif markerID == 4:
-                tile_board[i][j] = '4'
+                tile_board[i][j] = ('4', (i,j))
             elif markerID == 5:
-                tile_board[i][j] = '5'
+                tile_board[i][j] = ('5', (i,j))
             elif markerID == 6:
-                tile_board[i][j] = 'T'
+                tile_board[i][j] = ('T', (i,j))
             elif markerID == 7:
-                tile_board[i][j] = 'K'
+                tile_board[i][j] = ('K', (i,j))
             elif markerID == 8:
-                tile_board[i][j] = 'C'
+                tile_board[i][j] = ('C', (i,j))
             cv2.putText(frame, str(count), (bottomRight[0], bottomRight[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
             
             count += 1
@@ -154,20 +156,31 @@ def get_tiles():
     
     for i in range(3):
         for j in range(8):
-            n = tile_board[i*2][j]
-            t = tile_board[i*2+1][j]
+            n = tile_board[i*2][j][0]
+            n_pos = tile_board[i*2][j][1]
+            t = tile_board[i*2+1][j][0]
+            t_pos = tile_board[i*2+1][j][1]
             if t != None:
                 if n != None:
-                    tiles.append(n)
-                tiles.append(t)
+                    tiles.append((n, n_pos))
+                tiles.append((t, t_pos))
 
 
     print(tiles)
 
-    plt.imshow(frame)
-    plt.show()
+    if(SHOW):
+        plt.imshow(frame)
+        plt.show()
 
     return tiles
+
+def get_tiles_5():
+    t = []
+    for i in range(5):
+        ti = get_tiles()
+        if len(ti) > len(t):
+            t = ti
+    return t
 
 if __name__ == "__main__":
     while(True):

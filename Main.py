@@ -6,11 +6,13 @@ from Food import Food
 from User import User
 import serial
 import queue
+import time
 #import TileCamera
 
 IS_CONNECT = False
 READ_CV = False
 CURR_RECIPE = "HAMBURGER"
+TIME_WAIT_S = 2
 
 '''
 Global Parameters Init
@@ -31,7 +33,7 @@ RECIPES = {
 current_recipe = RECIPES[CURR_RECIPE]
 ser = ''
 cmds = []
-COLOR_LIB = {"BUN": "ff6a00", "LETTUCE": "00ff00", "TOMATO":"ff0000", "MEAT":"ff1010", "SPAGHETTI":"f7f7f2", "CHEESE": "ffffff"}
+COLOR_LIB = {"BUN": "ff4200", "LETTUCE": "00ff00", "TOMATO":"ff0000", "MEAT":"ff1010", "SPAGHETTI":"ffffff", "CHEESE": "ffffe0"}
 COLOR_NONE = "000000"
 
 '''
@@ -74,12 +76,13 @@ interaction_vector = [
     [( 0, 1),(-1, 0),(-1, 0),(-1, 0),(-1, 0),( 0,-1)],
     [( 0, 1),(-1, 0),(-1, 0),(-1, 0),(-1, 0),( 0,-1)]] # make sure the location of finish counter
 
-def read_tiles(isRead):
+def read_tiles():
     if READ_CV:
         tmp = TileCamera.get_tiles()
         print(tmp)
         for i in range(len(tmp)):
-            t = tmp[i]
+            t = tmp[i][0]
+            p = tmp[i][1]
             repeat = 1
             if t == '2' or t == '3' or t == '4':
                 repeat = int(t) - 1
@@ -88,24 +91,24 @@ def read_tiles(isRead):
                     t = tmp[i + 1]
             if t == 'U':
                 for l in range(repeat):
-                    tiles.append(ACTIONS.UP)
+                    tiles.append( (ACTIONS.UP, p) )
             elif t == 'D':
                 for l in range(repeat):
-                    tiles.append(ACTIONS.DOWN)
+                    tiles.append( (ACTIONS.DOWN, p) )
             elif t == 'R':
                 for l in range(repeat):
-                    tiles.append(ACTIONS.RIGHT)
+                    tiles.append( (ACTIONS.RIGHT, p) )
             elif t == 'L':
                 for l in range(repeat):
-                    tiles.append(ACTIONS.LEFT)
+                    tiles.append( (ACTIONS.LEFT, p) )
             elif t == 'P':
-                tiles.append(ACTIONS.PUT)
+                tiles.append( (ACTIONS.PUT, p) )
             elif t == 'T':
-                tiles.append(ACTIONS.TAKE)
+                tiles.append( (ACTIONS.TAKE, p) )
             elif t == 'K':
-                tiles.append(ACTIONS.COOK)
+                tiles.append( (ACTIONS.COOK, p) )
             elif t == 'C':
-                tiles.append(ACTIONS.CHOP)
+                tiles.append( (ACTIONS.CHOP, p) )
         print(tiles)
         print('read CV...')
     else:
@@ -375,7 +378,7 @@ if __name__ == "__main__":
         tile_idx = -1
         finished.clear()
 
-        read_tiles(READ_CV)
+        read_tiles()
         print_actions(-1)
         print_board()
         print(tiles)
@@ -384,7 +387,10 @@ if __name__ == "__main__":
         for t in tiles:
 
             tile_idx += 1
-            t = tiles[tile_idx]
+            t = tiles[tile_idx][0]
+            p = tiles[tile_idx][1]
+
+            cmds.append("LEDT_" + str(p[0]) + str(p[1]))
             
             if t == ACTIONS.UP or t == ACTIONS.DOWN or t == ACTIONS.LEFT or t == ACTIONS.RIGHT:
                 status = move(t)
@@ -406,6 +412,7 @@ if __name__ == "__main__":
                 cmds.append("LEDB_" + COLOR_NONE)
                 break
             print("\n WAITING.... \n")
+            time.sleep(TIME_WAIT_S)
 
         if tile_idx == len(tiles) -1:
             status = reach_end()
