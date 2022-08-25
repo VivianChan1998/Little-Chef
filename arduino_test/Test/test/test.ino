@@ -3,8 +3,8 @@
 #define T_PIN     5
 #define B_NUM_LEDS    100
 #define T_NUM_LEDS    100
-CRGB b_leds[NUM_LEDS];
-CRGB t_leds[NUM_LEDS];
+CRGB b_leds[B_NUM_LEDS];
+CRGB t_leds[T_NUM_LEDS];
 
 #define X_DELAY 2
 #define Y_DELAY 2
@@ -22,8 +22,8 @@ CRGB t_leds[NUM_LEDS];
 int x_count = 0;
 int y_count = 0;
 
-int tile_x[3] = {14, 16, 17}
-int tile_y[8] = {20, 22, 24, 26, 28, 30, 32, 34}
+int tile_x[3] = {18, 16, 14};
+int tile_y[8] = {22, 23, 24, 25, 26, 27, 28, 29};
 
 void setup() {
   // Sets the two pins as Outputs
@@ -39,8 +39,8 @@ void setup() {
     digitalWrite(Y_STEP, LOW);
     digitalWrite(Y_DIR, HIGH);
 
-    FastLED.addLeds<WS2812, T_PIN, GRB>(leds, NUM_LEDS);
-    FastLED.addLeds<WS2812, B_PIN, GRB>(leds, NUM_LEDS);
+    FastLED.addLeds<WS2812, T_PIN, GRB>(t_leds, T_NUM_LEDS);
+    FastLED.addLeds<WS2812, B_PIN, GRB>(b_leds, B_NUM_LEDS);
 
     Serial.println("start");
     Serial.println("BUTTON");
@@ -63,7 +63,7 @@ void loop() {
     }
     else if(data[0] == 'L')
     {
-      if(data[4] == 'B')
+      if(data[3] == 'B')
       {
         long c = strtol(data.substring(5).c_str(), NULL, 16);
         Serial.println(c);
@@ -75,12 +75,18 @@ void loop() {
       else
       {
         //long c = strtol(data.substring(5).c_str(), NULL, 16);
+        for(int i=0; i<3; ++i){
+          t_leds[tile_x[i]] = 0;
+        }
+        for(int i=0; i<8; ++i){
+          t_leds[tile_y[i]] = 0;
+        }
         int posx = tile_x[data[5] - '0'];
         int posy = tile_y[data[6] - '0'];
         Serial.println(posx);
         Serial.println(posy);
         t_leds[posx] = "ffffff";
-        t_leds[posx] = "ffffff";
+        t_leds[posy] = "ffffff";
         
         FastLED.show();
         Serial.println("DONE");
