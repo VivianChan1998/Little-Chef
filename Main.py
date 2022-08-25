@@ -7,12 +7,13 @@ from User import User
 import serial
 import queue
 import time
-#import TileCamera
+import TileCamera
+import math
 
-IS_CONNECT = False
-READ_CV = False
+IS_CONNECT = True
+READ_CV = True
 CURR_RECIPE = "HAMBURGER"
-TIME_WAIT_S = 2
+TIME_WAIT_S = 0
 
 '''
 Global Parameters Init
@@ -23,6 +24,7 @@ board[0][5] = STATIONS.FINISH # make sure the location of finish counter
 user = User(START_POINT)
 tiles = [] # RPi code should break it down into one single array for this code
 tile_idx = -1
+positions = []
 finished = []
 status = STATUS.OK
 RECIPES = {
@@ -78,11 +80,11 @@ interaction_vector = [
 
 def read_tiles():
     if READ_CV:
-        tmp = TileCamera.get_tiles()
+        tmp, pos = TileCamera.get_tiles()
         print(tmp)
         for i in range(len(tmp)):
-            t = tmp[i][0]
-            p = tmp[i][1]
+            t = tmp[i]
+            p = pos[i]
             repeat = 1
             if t == '2' or t == '3' or t == '4':
                 repeat = int(t) - 1
@@ -91,25 +93,32 @@ def read_tiles():
                     t = tmp[i + 1]
             if t == 'U':
                 for l in range(repeat):
-                    tiles.append( (ACTIONS.UP, p) )
+                    tiles.append( ACTIONS.UP )
+                    positions.append(p)
             elif t == 'D':
                 for l in range(repeat):
-                    tiles.append( (ACTIONS.DOWN, p) )
+                    tiles.append( ACTIONS.DOWN)
+                    positions.append(p)
             elif t == 'R':
                 for l in range(repeat):
-                    tiles.append( (ACTIONS.RIGHT, p) )
+                    tiles.append( ACTIONS.RIGHT )
+                    positions.append(p)
             elif t == 'L':
                 for l in range(repeat):
-                    tiles.append( (ACTIONS.LEFT, p) )
+                    tiles.append( ACTIONS.LEFT )
+                    positions.append(p)
             elif t == 'P':
-                tiles.append( (ACTIONS.PUT, p) )
+                tiles.append( ACTIONS.PUT )
+                positions.append(p)
             elif t == 'T':
-                tiles.append( (ACTIONS.TAKE, p) )
+                tiles.append( ACTIONS.TAKE )
+                positions.append(p)
             elif t == 'K':
-                tiles.append( (ACTIONS.COOK, p) )
+                tiles.append( ACTIONS.COOK )
+                positions.append(p)
             elif t == 'C':
-                tiles.append( (ACTIONS.CHOP, p) )
-        print(tiles)
+                tiles.append( ACTIONS.CHOP )
+                positions.append(p)
         print('read CV...')
     else:
         tiles.append(ACTIONS.RIGHT)
@@ -233,7 +242,15 @@ def print_actions(tile_idx):
         print(' ', end='')
 
 def get_interacting_station(x, y):
-    return board[x - interaction_vector[y][x][1]][y - interaction_vector[y][x][0]]
+    print(x)
+    print(y)
+    print(".....")
+    print(x-interaction_vector[x][y][1])
+    print(y - interaction_vector[x][y][0])
+    sta = board[x-interaction_vector[x][y][1]][y - interaction_vector[x][y][0]]
+    if x>6 or x<0 or y>5 or y<0:
+        return board[0][0]
+    return sta
 
 def move(dir):
     next_loc_x = user.location[0] + (1 if dir == ACTIONS.DOWN else -1 if dir == ACTIONS.UP else 0)
@@ -276,6 +293,7 @@ def take():
         return STATUS.ERR_INTERACTION
     s = get_interacting_station(x,y)
     if s.value > 10 or s.value < 5:
+        print(s)
         return STATUS.ERR_ACTION
     user.hold = Food(s.value)
     user.isHolding = True
@@ -351,6 +369,7 @@ def wait_for_button():
                 line = ser.readline().decode('utf-8').rstrip()
                 print(line)
                 if line == "BUTTON":
+                    cmds.append("E")
                     break
         else:
             key = input("type start >>> ")
@@ -387,10 +406,13 @@ if __name__ == "__main__":
         for t in tiles:
 
             tile_idx += 1
-            t = tiles[tile_idx][0]
-            p = tiles[tile_idx][1]
+            t = tiles[tile_idx]
+            p = positions[tile_idx]
+            print(t)
 
-            cmds.append("LEDT_" + str(p[0]) + str(p[1]))
+            print(p)
+
+            cmds.append("LEDT_" + str(math.floor(p[0]/2)) + str(p[1]))
             
             if t == ACTIONS.UP or t == ACTIONS.DOWN or t == ACTIONS.LEFT or t == ACTIONS.RIGHT:
                 status = move(t)

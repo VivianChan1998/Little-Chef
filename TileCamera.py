@@ -6,7 +6,7 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 from bisect import bisect_left
 
-SHOW = False
+SHOW = True
 
 camera = PiCamera()
 DIR_TH = 10
@@ -78,7 +78,9 @@ def calc_dist(pos, target):
 
 def get_tiles():
     tile_board = np.full((6, 8), None)
+    tile_pos = np.full((6, 8), None)
     tiles = []
+    tiles_p = []
     rawCapture = PiRGBArray(camera)
 
     camera.capture(rawCapture, format="bgr")
@@ -127,52 +129,66 @@ def get_tiles():
             bottomRight = convert2XY(bottomRight)
             dir = 'X'
             markerID = m[1]
-            print(m)
             i = int(m[3])
             j = int(m[4])
             if markerID == 0:
                 dir = determine_dir(topLeft, topRight, bottomRight, bottomLeft)
-                tile_board[i][j] = (dir, (i,j))
+                tile_board[i][j] = dir
+                tile_pos[i][j] = (i,j)
             elif markerID == 1:
-                tile_board[i][j] = ('P', (i,j))
+                tile_board[i][j] = 'P'
+                tile_pos[i][j] = (i,j)
             elif markerID == 2:
-                tile_board[i][j] = ('2', (i,j))
+                tile_board[i][j] = '2'
+                tile_pos[i][j] = (i,j)
             elif markerID == 3:
-                tile_board[i][j] = ('3', (i,j))
+                tile_board[i][j] = '3'
+                tile_pos[i][j] = (i,j)
             elif markerID == 4:
-                tile_board[i][j] = ('4', (i,j))
+                tile_board[i][j] = '4'
+                tile_pos[i][j] = (i,j)
             elif markerID == 5:
-                tile_board[i][j] = ('5', (i,j))
+                tile_board[i][j] = '5'
+                tile_pos[i][j] = (i,j)
             elif markerID == 6:
-                tile_board[i][j] = ('T', (i,j))
+                tile_board[i][j] = 'T'
+                tile_pos[i][j] = (i,j)
             elif markerID == 7:
-                tile_board[i][j] = ('K', (i,j))
+                tile_board[i][j] = 'K'
+                tile_pos[i][j] = (i,j)
             elif markerID == 8:
-                tile_board[i][j] = ('C', (i,j))
+                tile_board[i][j] = 'C'
+                tile_pos[i][j] = (i,j)
+            else:
+                tile_board[i][j] = None
+                tile_pos[i][j] = (i,j)
             cv2.putText(frame, str(count), (bottomRight[0], bottomRight[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
             
             count += 1
-        print(tile_board)
     
     for i in range(3):
         for j in range(8):
-            n = tile_board[i*2][j][0]
-            n_pos = tile_board[i*2][j][1]
-            t = tile_board[i*2+1][j][0]
-            t_pos = tile_board[i*2+1][j][1]
+            n = tile_board[i*2][j]
+            n_pos = tile_pos[i*2][j]
+            t = tile_board[i*2+1][j]
+            t_pos = tile_pos[i*2+1][j]
             if t != None:
                 if n != None:
-                    tiles.append((n, n_pos))
-                tiles.append((t, t_pos))
+                    tiles.append(n)
+                    tiles_p.append(n_pos)
+                tiles.append(t)
+                tiles_p.append(t_pos)
 
 
     print(tiles)
+    print(tiles_p)
+    print("------------------------------")
 
     if(SHOW):
         plt.imshow(frame)
         plt.show()
 
-    return tiles
+    return tiles, tiles_p
 
 def get_tiles_5():
     t = []
@@ -183,8 +199,8 @@ def get_tiles_5():
     return t
 
 if __name__ == "__main__":
-    while(True):
-        get_tiles()
+    tt = get_tiles_5()
+    print(tt)
 
 
         
