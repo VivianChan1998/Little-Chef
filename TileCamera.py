@@ -145,6 +145,9 @@ def get_tiles():
                 tile_board[i][j] = '3'
                 tile_pos[i][j] = (i,j)
             elif markerID == 4:
+                print(m[2])
+                print(i)
+                print(j)
                 tile_board[i][j] = '4'
                 tile_pos[i][j] = (i,j)
             elif markerID == 5:
@@ -182,6 +185,7 @@ def get_tiles():
 
     print(tiles)
     print(tiles_p)
+    print(tile_board)
     print("------------------------------")
 
     if(SHOW):

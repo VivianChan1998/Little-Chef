@@ -14,10 +14,12 @@ CRGB t_leds[T_NUM_LEDS];
 #define X_STEP 9
 #define Y_DIR 10
 #define Y_STEP 11
+#define X2_DIR 12
+#define X2_STEP 2
 
-#define X_STEP_ONE_BLOCK 360
-#define Y_STEP_ONE_BLOCK 300
-#define X_FORWARD_DIR 1 // 1 or 0
+#define X_STEP_ONE_BLOCK 285
+#define Y_STEP_ONE_BLOCK 285
+#define X_FORWARD_DIR 0 // 1 or 0
 #define Y_FORWARD_DIR 1 // 1 or 0
 
 int x_count = 0;
@@ -41,6 +43,11 @@ void setup() {
     pinMode(Y_DIR, OUTPUT);
     digitalWrite(Y_STEP, LOW);
     digitalWrite(Y_DIR, HIGH);
+
+    pinMode(X2_STEP, OUTPUT); 
+    pinMode(X2_DIR, OUTPUT);
+    digitalWrite(X2_STEP, LOW);
+    digitalWrite(X2_DIR, HIGH);
 
     pinMode(button_pin, INPUT);
 
@@ -132,13 +139,17 @@ void move_blocks(char dimension, int move) // could be negative val, [-5 ~ +5], 
     int d = dimension == 'X'? X_DELAY : Y_DELAY;
     bool dir = dimension == 'X'? X_FORWARD_DIR : Y_FORWARD_DIR;
     dir = move > 0? dir : !dir;
-    Serial.println(steps);
+    Serial.println(pin_step);
+    Serial.println(X2_STEP);
 
     digitalWrite(pin_dir, dir);
+    digitalWrite(X2_DIR, !dir);
     for(; steps != 0; steps--)
     {
+        if(dimension == 'X') {digitalWrite(X2_STEP, HIGH);}
         digitalWrite(pin_step, HIGH); 
         delay(d);
+        if(dimension == 'X') digitalWrite(X2_STEP, LOW); 
         digitalWrite(pin_step, LOW); 
         delay(d);
     }

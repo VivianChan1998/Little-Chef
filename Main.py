@@ -9,6 +9,8 @@ import queue
 import time
 import TileCamera
 import math
+import pygame
+import os
 
 IS_CONNECT = True
 READ_CV = True
@@ -37,6 +39,15 @@ ser = ''
 cmds = []
 COLOR_LIB = {"BUN": "ff4200", "LETTUCE": "00ff00", "TOMATO":"ff0000", "MEAT":"ff1010", "SPAGHETTI":"ffffff", "CHEESE": "ffffe0"}
 COLOR_NONE = "000000"
+
+pygame.init()
+err_sound = pygame.mixer.Sound(r"ErrorSoundFormatted.wav")
+cook_sound = pygame.mixer.Sound(r"CookingSound.wav")
+chop_sound = pygame.mixer.Sound(r"ChoppingSound.wav")
+put_sound = pygame.mixer.Sound(r"PutSound.wav")
+take_sound = pygame.mixer.Sound(r"TakeAction.wav")
+
+#pygame.mixer.music.play()
 
 '''
 BFS Function
@@ -78,9 +89,19 @@ interaction_vector = [
     [( 0, 1),(-1, 0),(-1, 0),(-1, 0),(-1, 0),( 0,-1)],
     [( 0, 1),(-1, 0),(-1, 0),(-1, 0),(-1, 0),( 0,-1)]] # make sure the location of finish counter
 
+trace_interaction = [
+    [( 0, 0),( 0, 0),( 0, 0),( 0, 0),( 0, 0),( 1, 0)],
+    [( 0, 1),( 1,-1),(-1, 0),( 1, 0),( 1, 0),( 0,-1)],
+    [( 0, 1),( 1,-1),( 1, 0),( 1, 0),( 1, 0),( 0,-1)],
+    [( 0, 1),( 0,-1),( 0,-1),( 0, 1),( 0,-1),( 0,-1)],
+    [( 0, 1),( 0, 1),( 0,-1),( 0, 1),( 0,-1),( 0,-1)],
+    [( 0, 1),(-1, 0),(-1, 0),(-1, 0),( 0,-1),( 0,-1)],
+    [( 0, 1),(-1, 0),(-1, 0),(-1, 0),( 0,-1),( 0,-1)]
+]
+
 def read_tiles():
     if READ_CV:
-        tmp, pos = TileCamera.get_tiles()
+        tmp, pos = TileCamera.get_tiles_5()
         print(tmp)
         for i in range(len(tmp)):
             t = tmp[i]
@@ -148,6 +169,8 @@ def define_board():
     board[4][0] = STATIONS.MEAT
     board[6][5] = STATIONS.LETTUCE
     board[2][0] = STATIONS.BUN
+    board[3][3] = STATIONS.OBSTACLE
+    board[5][2] = STATIONS.OBSTACLE
     
 def return_to_start():
     print('return to start ============ ')
@@ -188,7 +211,8 @@ def print_board():
         print("None")
     print("finished:", end=' ')
     for i in range(len(finished)):
-        print(finished[i].name + ' ')
+        if finished[i] != None:
+            print(finished[i].name + ' ')
     print()
 
     for j in range(6):
@@ -245,11 +269,13 @@ def get_interacting_station(x, y):
     print(x)
     print(y)
     print(".....")
-    print(x-interaction_vector[x][y][1])
-    print(y - interaction_vector[x][y][0])
-    sta = board[x-interaction_vector[x][y][1]][y - interaction_vector[x][y][0]]
     if x>6 or x<0 or y>5 or y<0:
         return board[0][0]
+
+    print(x-trace_interaction[x][y][1])
+    print(y - trace_interaction[x][y][0])
+    sta = board[x - trace_interaction[x][y][0]][y - trace_interaction[x][y][1]]
+    
     return sta
 
 def move(dir):
@@ -270,8 +296,10 @@ def cook():
     if board[x][y] != STATIONS.INTERACTION:
         return STATUS.ERR_INTERACTION
     s = get_interacting_station(x,y)
+    '''
     if s != STATIONS.COOK and user.hold.instructions != "cook":
         return STATUS.ERR_ACTION
+    '''
     cmds.append("SOUND_CO")
     return STATUS.OK
 
@@ -281,8 +309,10 @@ def chop():
     if board[x][y] != STATIONS.INTERACTION:
         return STATUS.ERR_INTERACTION
     s = get_interacting_station(x,y)
+    '''
     if s != STATIONS.CHOP and user.hold.instructions != "chop":
         return STATUS.ERR_ACTION
+    '''
     cmds.append("SOUND_CH")
     return STATUS.OK
 
@@ -292,9 +322,12 @@ def take():
     if board[x][y] != STATIONS.INTERACTION:
         return STATUS.ERR_INTERACTION
     s = get_interacting_station(x,y)
+    print(s)
+    '''
     if s.value > 10 or s.value < 5:
         print(s)
         return STATUS.ERR_ACTION
+    '''
     user.hold = Food(s.value)
     user.isHolding = True
     cmds.append("SOUND_TA")
@@ -328,6 +361,7 @@ def check_err_execute():
         print(status)
         print()
         cmds.append("SOUND_ERR") #TEMP
+        
         execute()
         return_to_start()
         return False
@@ -351,6 +385,16 @@ def send_wait_cmd(ser):
         print(c)
         if c[0] == 'S':
             print("SOUND")
+            if c == "SOUND_ERR":
+                pygame.mixer.Sound.play(err_sound)
+            elif c == "SOUND_CO":
+                pygame.mixer.Sound.play(cook_sound)
+            elif c == "SOUND_CH":
+                pygame.mixer.Sound.play(chop_sound)
+            elif c == "SOUND_TA":
+                pygame.mixer.Sound.play(take_sound)
+            elif c == "SOUND_PU":
+                pygame.mixer.Sound.play(put_sound)
         else:
             ser.write(c.encode('utf-8'))
             line = ""
