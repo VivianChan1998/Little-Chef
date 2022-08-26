@@ -46,6 +46,7 @@ cook_sound = pygame.mixer.Sound(r"CookingSound.wav")
 chop_sound = pygame.mixer.Sound(r"ChoppingSound.wav")
 put_sound = pygame.mixer.Sound(r"PutSound.wav")
 take_sound = pygame.mixer.Sound(r"TakeAction.wav")
+fin_sound = pygame.mixer.Sound(r"SuccessSound.wav")
 
 #pygame.mixer.music.play()
 
@@ -353,6 +354,7 @@ def reach_end():
     if len(current_recipe) != len(finished):
         return STATUS.ERR_INCOMPLETE
     print("end")
+    cmds.append("SOUND_FIN")
     return STATUS.OK
 
 def check_err_execute():
@@ -361,6 +363,7 @@ def check_err_execute():
         print(status)
         print()
         cmds.append("SOUND_ERR") #TEMP
+        user.isHolding = False
         
         execute()
         return_to_start()
@@ -395,6 +398,8 @@ def send_wait_cmd(ser):
                 pygame.mixer.Sound.play(take_sound)
             elif c == "SOUND_PU":
                 pygame.mixer.Sound.play(put_sound)
+            else:
+                pygame.mixer.Sound.play(fin_sound)
         else:
             ser.write(c.encode('utf-8'))
             line = ""

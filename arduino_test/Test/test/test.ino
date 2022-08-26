@@ -54,7 +54,7 @@ void setup() {
     FastLED.addLeds<WS2812, T_PIN, GRB>(t_leds, T_NUM_LEDS);
     FastLED.addLeds<WS2812, B_PIN, GRB>(b_leds, B_NUM_LEDS);
     
-    long c = strtol("ffffff", NULL, 16);
+    long c = strtol("fff0f0", NULL, 16);
     for(int i=29; i<99; i++)
     {
       t_leds[i] = c;

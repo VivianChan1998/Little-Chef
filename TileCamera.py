@@ -86,7 +86,7 @@ def get_tiles():
     camera.capture(rawCapture, format="bgr")
     img = rawCapture.array
 
-    alpha = 2.2
+    alpha = 1.5
     beta = 0
 
     frame = cv2.convertScaleAbs(img, alpha=alpha, beta=beta)
@@ -108,13 +108,16 @@ def get_tiles():
                     c = m[2]
                     if c[0] > TILE_MAP[i][j][0] and c[1] > TILE_MAP[i][j][1]:
                         markers[idx] =list(markers[idx])
+                        print(markers[idx][1], end = ' ')
+                        print(i, end = ' ')
+                        print(j)
                         markers[idx][3] = i
                         markers[idx][4] = j
                         break
 
         count = 0
 
-        for i in range(6):
+        for i in range(4,6):
             for j in range(8):
                 cv2.putText(frame, str(i), (TILE_MAP[i][j][0] -10, TILE_MAP[i][j][1] -20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,255), 2)
                 cv2.putText(frame, str(j), (TILE_MAP[i][j][0] +10, TILE_MAP[i][j][1] -20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,255), 2)
@@ -145,9 +148,6 @@ def get_tiles():
                 tile_board[i][j] = '3'
                 tile_pos[i][j] = (i,j)
             elif markerID == 4:
-                print(m[2])
-                print(i)
-                print(j)
                 tile_board[i][j] = '4'
                 tile_pos[i][j] = (i,j)
             elif markerID == 5:
@@ -168,7 +168,37 @@ def get_tiles():
             cv2.putText(frame, str(count), (bottomRight[0], bottomRight[1] - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
             
             count += 1
+    print(tile_board)
+    print("------------------------------")
+
+
+    print(tile_board)
+    print("------------------------------")
+
     
+    return tile_board, frame, tile_pos
+
+def get_tiles_5():
+    tile_board = np.full((6, 8), None)
+    tile_pos = np.full((6, 8), None)
+    t = []
+    frames = []
+    for i in range(5):
+        tb, f, p = get_tiles()
+        frames.append(f)
+        for i in range(6):
+            for j in range(8):
+                if tile_board[i][j] == None:
+                    tile_board[i][j] = tb[i][j]
+                    tile_pos[i][j] = p[i][j]
+
+
+    print("===============")
+    print(tile_board)
+    print("===============")
+
+    tiles = []
+    tiles_p = []
     for i in range(3):
         for j in range(8):
             n = tile_board[i*2][j]
@@ -182,25 +212,17 @@ def get_tiles():
                 tiles.append(t)
                 tiles_p.append(t_pos)
 
-
     print(tiles)
     print(tiles_p)
-    print(tile_board)
-    print("------------------------------")
-
     if(SHOW):
-        plt.imshow(frame)
+        f, axarr = plt.subplots(2,2)
+        axarr[0,0].imshow(frames[0])
+        axarr[0,1].imshow(frames[1])
+        axarr[1,0].imshow(frames[2])
+        axarr[1,1].imshow(frames[3])
         plt.show()
 
     return tiles, tiles_p
-
-def get_tiles_5():
-    t = []
-    for i in range(5):
-        ti = get_tiles()
-        if len(ti) > len(t):
-            t = ti
-    return t
 
 if __name__ == "__main__":
     tt = get_tiles_5()
